@@ -1,0 +1,359 @@
+rm(list = ls())
+
+library(lubridate)
+dz_tyg <- wday(Sys.Date(), week_start=1)
+if(dz_tyg %in% 1:3)
+{
+  dni_przed <- 5
+}
+if(dz_tyg %in% 4:5)
+{
+  dni_przed <- 3
+}
+
+load(paste0(getwd(), "/k2_Kategorie_z_", Sys.Date() - dni_przed, ".RData"))
+
+dz_tyg <- wday(Sys.Date(), week_start=1)
+if(dz_tyg %in% 1:3)
+{
+  dni_przed <- 5
+}
+if(dz_tyg %in% 4:5)
+{
+  dni_przed <- 3
+}
+
+# Zczytywanie cen
+
+library(rvest)
+library(dplyr)
+library(openxlsx)
+
+k2_ceny <- data.frame()
+
+zgubiono <- 0
+
+zbior_adresow <- c(
+  "https://www.k2obuwie.pl/kategoria-produktu/buty-damskie/",
+  "https://www.k2obuwie.pl/kategoria-produktu/buty-meskie/",
+  "https://www.k2obuwie.pl/kategoria-produktu/obuwie-dzieciece/",
+#  "https://www.k2obuwie.pl/kategoria-produktu/akcesoria/",
+#  "https://www.k2obuwie.pl/kategoria-produktu/galanteria/",
+  "https://www.k2obuwie.pl/kategoria-produktu/torebki-i-portfele/"
+)
+
+for(adres in zbior_adresow)
+{
+  link <- read_html(adres)
+  
+  print(adres)
+  
+  print("Strona 1")
+  
+  nazwy <- link %>% html_elements(".woocommerce-loop-product__title") %>% html_text2()
+  
+  ceny_zczytane <- link %>% html_elements(".price") %>% html_text2()
+  
+  ceny_zczytane <- regmatches(ceny_zczytane, gregexpr("[[:digit:]]+", ceny_zczytane))
+  
+  ceny <- rep(NA, length(ceny_zczytane))
+  
+  for(i in 1:length(ceny))
+  {
+    ceny[i] <- as.double(paste0(ceny_zczytane[[i]][1], ".", ceny_zczytane[[i]][2]))
+  }
+  
+  if(length(nazwy) == length(ceny))
+  {
+    k2_ceny <- rbind(k2_ceny, data.frame(Nazwa = nazwy, Cena = ceny))
+  }
+  else
+  {
+    print("Nie znalazłem sposobu, by znaleźć programem dobrą nazwę produktu bez podanej ceny do wyrzucenia.")
+    zgubiono <- zgubiono + length(nazwy)
+    print(paste0("Stracono łącznie ", zgubiono, "cen produktów."))
+  }
+  
+  print(paste0("Zczytano łącznie ", nrow(k2_ceny), " cen produktów."))
+  
+  nr_strony <- link %>% html_elements(".woocommerce-pagination") %>% html_text2()
+  
+  if(length(nr_strony) > 0)
+  {
+    nr_strony <- regmatches(nr_strony, gregexpr("[[:digit:]]+", nr_strony))
+    
+    nr_strony <- nr_strony[[1]]
+    
+    nr_strony <- as.double(nr_strony[length(nr_strony)])
+    
+    print(paste0("Jest ", nr_strony, " stron."))
+    
+    if(nr_strony > 1)
+    {
+      for(i in 2:nr_strony)
+      {
+        link <- read_html(paste0(adres, "page/", i, "/"))
+        
+        print(paste0("Strona ", i))
+        
+        nazwy <- link %>% html_elements(".woocommerce-loop-product__title") %>% html_text2()
+        
+        ceny_zczytane <- link %>% html_elements(".price") %>% html_text2()
+        
+        ceny_zczytane <- regmatches(ceny_zczytane, gregexpr("[[:digit:]]+", ceny_zczytane))
+        
+        ceny <- rep(NA, length(ceny_zczytane))
+        
+        for(i in 1:length(ceny))
+        {
+          ceny[i] <- as.double(paste0(ceny_zczytane[[i]][1], ".", ceny_zczytane[[i]][2]))
+        }
+        
+        if(length(nazwy) == length(ceny))
+        {
+          k2_ceny <- rbind(k2_ceny, data.frame(Nazwa = nazwy, Cena = ceny))
+        }
+        else
+        {
+          print("Nie znalazłem sposobu, by znaleźć programem dobrą nazwę produktu bez podanej ceny do wyrzucenia.")
+          zgubiono <- zgubiono + length(nazwy)
+          print(paste0("Stracono łącznie ", zgubiono, "cen produktów."))
+        }
+        
+        
+        
+        print(paste0("Zczytano łącznie ", nrow(k2_ceny), " cen produktów."))
+      }
+    }
+  }
+  else
+  {
+    print("Na tej stronie, zapewne nie ma pokazanego wyboru stron, bo jest tylko jedna strona.")
+  }
+}
+
+
+
+wsz_k2_ceny <- k2_ceny
+
+k2_ceny <- unique(k2_ceny)
+
+# Zapisywanie wynikow do Excela i zrobienie z nich save'a R-owego
+write.xlsx(k2_ceny, paste0(getwd(), "/k2_ceny_", Sys.Date(), ".xlsx"))
+save.image(paste0(getwd(), "/k2_ceny_", Sys.Date(), ".RData"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+wszystko <- k2_ceny
+
+nrow(wszystko)
+nrow(unique(wszystko))
+
+wszystko <- unique(wszystko)
+
+wszystko$Nazwa <- toupper(wszystko$Nazwa)
+
+wszystko$Cena <- as.double(wszystko$Cena)
+
+srednie <- rep(0, 3)
+wariancje <- rep(0, 3)
+nazwy_kategorii <- rep("", 3)
+identyfikatory <- rep("", 3)
+
+
+
+
+
+
+# 1. (indeks: 214, wiersz: 115) Obuwie meskie
+
+meskie <- grepl("MĘSKIE", wszystko$Nazwa, fixed = TRUE)
+meska <- grepl("MĘSKA", wszystko$Nazwa, fixed = TRUE)
+meski <- grepl("MĘSKI", wszystko$Nazwa, fixed = TRUE)
+polbuty <- grepl("PÓŁBUTY", wszystko$Nazwa, fixed = TRUE)
+buty <- grepl("BUTY", wszystko$Nazwa, fixed = TRUE)
+sandaly <- grepl("SANDAŁY", wszystko$Nazwa, fixed = TRUE)
+trzewiki <- grepl("TRZEWIKI", wszystko$Nazwa, fixed = TRUE)
+kozaki <- grepl("KOZAKI", wszystko$Nazwa, fixed = TRUE)
+pantofle <- grepl("PANTOFLE", wszystko$Nazwa, fixed = TRUE)
+
+idx_obuwie_meskie <- which((polbuty == 1 & meskie == 1) | (buty == 1 & meskie == 1) | (sandaly == 1 & meskie == 1) |
+                             (trzewiki == 1 & meskie == 1) | (kozaki == 1 & meskie == 1) | (pantofle == 1 & meskie == 1))
+
+
+# wszystko$Nazwa[idx_obuwie_meskie]
+
+
+
+srednie[1] <- mean(wszystko$Cena[idx_obuwie_meskie])
+
+
+
+wariancje[1] <- var(wszystko$Cena[idx_obuwie_meskie])
+
+
+
+nazwy_kategorii[1] <- "Obuwie męskie"
+identyfikatory[1] <- "214"
+
+
+
+
+
+
+
+
+# 2. (indeks: 215, wiersz: 116) Obuwie damskie
+
+damskie <- grepl("DAMSKIE", wszystko$Nazwa, fixed = TRUE)
+damska <- grepl("DAMSKA", wszystko$Nazwa, fixed = TRUE)
+damski <- grepl("DAMSKI", wszystko$Nazwa, fixed = TRUE)
+polbuty <- grepl("PÓŁBUTY", wszystko$Nazwa, fixed = TRUE)
+buty <- grepl("BUTY", wszystko$Nazwa, fixed = TRUE)
+sandaly <- grepl("SANDAŁY", wszystko$Nazwa, fixed = TRUE)
+trzewiki <- grepl("TRZEWIKI", wszystko$Nazwa, fixed = TRUE)
+kozaki <- grepl("KOZAKI", wszystko$Nazwa, fixed = TRUE)
+pantofle <- grepl("PANTOFLE", wszystko$Nazwa, fixed = TRUE)
+
+idx_obuwie_damskie <- which((polbuty == 1 & damskie == 1) | (buty == 1 & damskie == 1) | (sandaly == 1 & damskie == 1) |
+                              (trzewiki == 1 & damskie == 1) | (kozaki == 1 & damskie == 1) | (pantofle == 1 & damskie == 1))
+
+
+# wszystko$Nazwa[idx_obuwie_damskie]
+
+
+
+srednie[2] <- mean(wszystko$Cena[idx_obuwie_damskie])
+
+
+
+wariancje[2] <- var(wszystko$Cena[idx_obuwie_damskie])
+
+
+
+nazwy_kategorii[2] <- "Obuwie damskie"
+identyfikatory[2] <- "215"
+
+
+
+
+
+
+
+
+
+
+
+
+# 3. (indeks: 216, wiersz: 117) Obuwie dzieciece
+
+dzieciece <- grepl("DZIECIĘCE", wszystko$Nazwa, fixed = TRUE)
+dzieciecy <- grepl("DZIECIĘCY", wszystko$Nazwa, fixed = TRUE)
+dziecieca <- grepl("DZIECIĘCA", wszystko$Nazwa, fixed = TRUE)
+polbuty <- grepl("PÓŁBUTY", wszystko$Nazwa, fixed = TRUE)
+buty <- grepl("BUTY", wszystko$Nazwa, fixed = TRUE)
+sandaly <- grepl("SANDAŁY", wszystko$Nazwa, fixed = TRUE)
+trzewiki <- grepl("TRZEWIKI", wszystko$Nazwa, fixed = TRUE)
+kozaki <- grepl("KOZAKI", wszystko$Nazwa, fixed = TRUE)
+pantofle <- grepl("PANTOFLE", wszystko$Nazwa, fixed = TRUE)
+
+idx_obuwie_dzieciece <- which((polbuty == 1 & dzieciece == 1) | (buty == 1 & dzieciece == 1) | (sandaly == 1 & dzieciece == 1) |
+                                (trzewiki == 1 & dzieciece == 1) | (kozaki == 1 & dzieciece == 1) | (pantofle == 1 & dzieciece == 1))
+
+
+# wszystko$Nazwa[idx_obuwie_dzieciece]
+
+
+
+srednie[3] <- mean(wszystko$Cena[idx_obuwie_dzieciece])
+
+
+
+wariancje[3] <- var(wszystko$Cena[idx_obuwie_dzieciece])
+
+
+
+nazwy_kategorii[3] <- "Obuwie dziecięce"
+identyfikatory[3] <- "216"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kat_sr_war <- data.frame("Nazwa" = nazwy_kategorii, "Srednia" = srednie, "Wariancja" = wariancje)
+# View(kat_sr_war)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# To bylo przy 1-szym tworzeniu tego pliku ze srednimi, teraz po prostu dorzucam nowy wiersz z nowa data, z nowymi srednimi dla tej daty.
+# dane <- matrix("", nrow = 2, ncol = 4)
+# dane <- data.frame(dane)
+# colnames(dane) <- c("", nazwy_kategorii)
+# dane[1, 2:4] <- identyfikatory
+# dane[2, 2:4] <- srednie
+# dane[2, 1] <- as.character(Sys.Date())
+# write.xlsx(dane, paste0(getwd(), "/k2_Kategorie_z_", Sys.Date(), ".xlsx"))
+# save.image(paste0(getwd(), "/k2_Kategorie_z_", Sys.Date(), ".RData"))
+
+if(dane[nrow(dane), 1] == Sys.Date() - dni_przed)
+{
+  dane[nrow(dane) + 1, ] <- c(as.character(Sys.Date()), kat_sr_war$Srednia)
+  for(i in 2:ncol(dane)){dane[, i] <- as.double(dane[,i])}
+  write.xlsx(dane, paste0(getwd(), "/k2_Kategorie_z_", Sys.Date(), ".xlsx"))
+  save.image(paste0(getwd(), "/k2_Kategorie_z_", Sys.Date(), ".RData"))
+  write.xlsx(wszystko, paste0(getwd(), "/k2_", Sys.Date(), ".xlsx"))
+}
