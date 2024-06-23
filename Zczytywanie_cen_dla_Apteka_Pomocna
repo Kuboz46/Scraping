@@ -1,0 +1,438 @@
+rm(list = ls())
+
+library(lubridate)
+dz_tyg <- wday(Sys.Date(), week_start=1)
+if(dz_tyg %in% 1:3)
+{
+  dni_przed <- 5
+}
+if(dz_tyg %in% 4:5)
+{
+  dni_przed <- 3
+}
+
+load(paste0(getwd(), "/apteka_pomocna_Kategorie_z_", Sys.Date() - dni_przed, ".RData"))
+
+dz_tyg <- wday(Sys.Date(), week_start=1)
+if(dz_tyg %in% 1:3)
+{
+  dni_przed <- 5
+}
+if(dz_tyg %in% 4:5)
+{
+  dni_przed <- 3
+}
+
+# Zczytywanie cen
+
+library(rvest)
+library(dplyr)
+library(openxlsx)
+
+apteka_pomocna_ceny <- data.frame()
+
+zbior_adresow <- c(
+
+  "https://aptekapomocna24.pl/pol_m_Apteka-151.html",
+  "https://aptekapomocna24.pl/pol_m_Leki-na-recepte-2093.html",
+  "https://aptekapomocna24.pl/pol_m_WITAMINY-188.html",
+  "https://aptekapomocna24.pl/pol_m_OPALANIE-2157.html",
+  "http://aptekapomocna24.pl/pol_m_Apteka_Przeziebienie-i-grypa-176.html",
+  "https://aptekapomocna24.pl/pol_m_MEZCZYZNA-I-KOBIETA-154.html",
+  "https://aptekapomocna24.pl/pol_m_Kosmetyki-155.html",
+  "https://aptekapomocna24.pl/pol_m_Mama-i-dziecko-156.html"
+)
+
+for(adres in zbior_adresow)
+{
+  link <- read_html(adres)
+  
+  print(adres)
+  
+  print("Strona 1")
+  
+  nazwy <- link %>% html_elements(".product__name") %>% html_text2()
+  
+  nazwy <- nazwy[which(nazwy != "")]
+  
+  # ceny_zczytane <- link %>% html_elements(".price") %>% html_text2()
+  
+  ceny_zczytane <- link %>% html_elements(".price") %>% html_text2()
+  
+  ceny_zczytane <- regmatches(ceny_zczytane, gregexpr("[[:digit:]]+", ceny_zczytane))
+  
+  ceny <- rep(0, length(ceny_zczytane))
+  
+  for(i in 1:length(ceny))
+  {
+    len_i_el <- length(ceny_zczytane[[i]])
+    ceny[i] <- as.double(paste0(ceny_zczytane[[i]][1], ".", ceny_zczytane[[i]][2]))
+  }
+  
+  nazwy <- nazwy[which(!(is.na(ceny)))]
+  
+  ceny <- ceny[which(!(is.na(ceny)))]
+  
+  apteka_pomocna_ceny <- rbind(apteka_pomocna_ceny, data.frame(Nazwa = nazwy, Cena = ceny))
+  
+  print(paste0("Zczytano łącznie ", nrow(apteka_pomocna_ceny), " cen produktów."))
+  
+  nr_strony <- link %>% html_elements(".pagination__link") %>% html_text2()
+  
+  nr_strony <- as.double(nr_strony[length(nr_strony) - 1])
+  
+  print(paste0("Jest ", nr_strony, " stron."))
+  
+  if(length(nr_strony > 0))
+  {
+    if(nr_strony > 1)
+    {
+      for(i in 2:nr_strony)
+      {
+        link <- read_html(paste0(adres, "?counter=", i - 1))
+        
+        print(paste0("Strona ", i))
+        
+        nazwy <- link %>% html_elements(".product__name") %>% html_text2()
+        
+        nazwy <- nazwy[which(nazwy != "")]
+        
+        # ceny_zczytane <- link %>% html_elements(".price") %>% html_text2()
+        
+        ceny_zczytane <- link %>% html_elements(".price") %>% html_text2()
+        
+        ceny_zczytane <- regmatches(ceny_zczytane, gregexpr("[[:digit:]]+", ceny_zczytane))
+        
+        ceny <- rep(0, length(ceny_zczytane))
+        
+        for(i in 1:length(ceny))
+        {
+          len_i_el <- length(ceny_zczytane[[i]])
+          ceny[i] <- as.double(paste0(ceny_zczytane[[i]][1], ".", ceny_zczytane[[i]][2]))
+        }
+        
+        nazwy <- nazwy[which(!(is.na(ceny)))]
+        
+        ceny <- ceny[which(!(is.na(ceny)))]
+        
+        apteka_pomocna_ceny <- rbind(apteka_pomocna_ceny, data.frame(Nazwa = nazwy, Cena = ceny))
+        
+        print(paste0("Zczytano łącznie ", nrow(apteka_pomocna_ceny), " cen produktów."))
+      }
+    }
+  }
+}
+
+wsz_apteka_pomocna_ceny <- apteka_pomocna_ceny
+apteka_pomocna_ceny <- unique(apteka_pomocna_ceny)
+
+write.xlsx(apteka_pomocna_ceny, paste0(getwd(), "/apteka_pomocna_", Sys.Date(), ".xlsx"))
+save.image(paste0(getwd(), "/apteka_pomocna_", Sys.Date(), ".RData"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+wszystko <- apteka_pomocna_ceny
+
+nrow(wszystko)
+nrow(unique(wszystko))
+
+wszystko <- unique(wszystko)
+
+wszystko$Nazwa <- toupper(wszystko$Nazwa)
+
+wszystko$Cena <- as.double(wszystko$Cena)
+
+srednie <- rep(0, 2)
+wariancje <- rep(0, 2)
+nazwy_kategorii <- rep("", 2)
+identyfikatory <- rep("", 2)
+
+
+
+
+
+
+
+
+# 1. (indeks: 400, wiersz: 184) Wyroby farmaceutyczne
+
+syrop <- grepl("SYROP", wszystko$Nazwa, fixed = TRUE)
+tabletka <- grepl("TABLETKA", wszystko$Nazwa, fixed = TRUE)
+tabletki <- grepl("TABLETKI", wszystko$Nazwa, fixed = TRUE)
+plaster <- grepl("PLASTER", wszystko$Nazwa, fixed = TRUE)
+plastry <- grepl("PLASTRY", wszystko$Nazwa, fixed = TRUE)
+opatrunek <- grepl("OPATRUNEK", wszystko$Nazwa, fixed = TRUE)
+opatrunki <- grepl("OPATRUNKI", wszystko$Nazwa, fixed = TRUE)
+implant <- grepl("IMPLANT", wszystko$Nazwa, fixed = TRUE)
+cewnik <- grepl("CEWNIK", wszystko$Nazwa, fixed = TRUE)
+test_ciazowy <- grepl("TEST CIĄŻOWY", wszystko$Nazwa, fixed = TRUE)
+testy_ciazowe <- grepl("TESTY CIĄŻOWE", wszystko$Nazwa, fixed = TRUE)
+test_owulacyjny <- grepl("TEST OWULACYJNY", wszystko$Nazwa, fixed = TRUE)
+testy_owulacyjne <- grepl("TESTY OWULACYJNE", wszystko$Nazwa, fixed = TRUE)
+
+length(which(syrop == 1))
+length(which(tabletka == 1))
+length(which(tabletki == 1))
+length(which(plaster == 1))
+length(which(plastry == 1))
+length(which(opatrunek == 1))
+length(which(opatrunki == 1))
+length(which(implant == 1))
+length(which(cewnik == 1))
+length(which(test_ciazowy == 1))
+length(which(testy_ciazowe == 1))
+length(which(test_owulacyjny == 1))
+length(which(testy_owulacyjne == 1))
+
+idx_wyroby_farmaceutyczne <- which(syrop == 1 | tabletka == 1 | tabletki == 1| plaster == 1 | plastry == 1 | opatrunek == 1 |
+                                     opatrunki == 1 | implant == 1 | cewnik == 1 | test_ciazowy == 1 | testy_ciazowe == 1 |
+                                     test_owulacyjny == 1 | testy_owulacyjne == 1)
+
+
+
+# wszystko$Nazwa[which(syrop == 1)]
+# wszystko$Nazwa[which(tabletka == 1)]
+# wszystko$Nazwa[which(tabletki == 1)]
+# wszystko$Nazwa[which(plaster == 1)]
+# wszystko$Nazwa[which(plastry == 1)]
+# wszystko$Nazwa[which(opatrunek == 1)]
+# wszystko$Nazwa[which(opatrunki == 1)]
+# wszystko$Nazwa[which(implant == 1)]
+# wszystko$Nazwa[which(cewnik == 1)]
+# wszystko$Nazwa[which(test_ciazowy == 1)]
+# wszystko$Nazwa[which(testy_ciazowe == 1)]
+# wszystko$Nazwa[which(test_owulacyjny == 1)]
+# wszystko$Nazwa[which(testy_owulacyjne == 1)]
+
+
+
+# wszystko$Nazwa[idx_wyroby_farmaceutyczne]
+
+
+
+srednie[1] <- mean(wszystko$Cena[idx_wyroby_farmaceutyczne])
+
+
+
+wariancje[1] <- var(wszystko$Cena[idx_wyroby_farmaceutyczne])
+
+
+
+nazwy_kategorii[1] <- "Wyroby farmaceutyczne"
+identyfikatory[1] <- "400"
+
+
+
+
+
+
+
+
+# 2. Tabletki przeciwbolowe (kategoria spoza listy)
+
+tabletka <- grepl("TABLETKA", wszystko$Nazwa, fixed = TRUE)
+przeciwbolowa <- grepl("PRZECIWBÓLOWA", wszystko$Nazwa, fixed = TRUE)
+tabletki <- grepl("TABLETKI", wszystko$Nazwa, fixed = TRUE)
+przeciwbolowe <- grepl("PRZECIWBÓLOWE", wszystko$Nazwa, fixed = TRUE)
+apap <- grepl("APAP", wszystko$Nazwa, fixed = TRUE)
+ibuprom <- grepl("IBUPROM", wszystko$Nazwa, fixed = TRUE)
+nurofen <- grepl("NUROFEN", wszystko$Nazwa, fixed = TRUE)
+metafen <- grepl("METAFEN", wszystko$Nazwa, fixed = TRUE)
+
+idx_tabletki_przeciwbolowe <- which((tabletka == 1 & przeciwbolowa == 1) | (tabletki == 1 & przeciwbolowe == 1) | apap == 1 | ibuprom == 1 |
+                                      nurofen == 1 | metafen == 1)
+
+wszystko$Nazwa[idx_tabletki_przeciwbolowe]
+
+
+
+
+
+
+# 3. Leki zoladkowe (kategoria spoza listy)
+
+
+
+
+
+
+
+
+
+
+# 4. (indeks: 401, wiersz: 185) Testy ciazowe i mechaniczne srodki antykoncepcyjne
+
+test_ciazowy <- grepl("TEST CIĄŻOWY", wszystko$Nazwa, fixed = TRUE)
+testy_ciazowe <- grepl("TESTY CIĄŻOWE", wszystko$Nazwa, fixed = TRUE)
+prezerwatywa <- grepl("PREZERWATYWA", wszystko$Nazwa, fixed = TRUE)
+prezerwatywy <- grepl("PREZERWATYWY", wszystko$Nazwa, fixed = TRUE)
+kapturki_dopochwowe <- grepl("KAPTURKI DOPOCHWOWE", wszystko$Nazwa, fixed = TRUE)
+kapturek_dopochwowy <- grepl("KAPTUREK DOPOCHWOWY", wszystko$Nazwa, fixed = TRUE)
+blony_dopochwowe <- grepl("BŁONY DOPOCHWOWE", wszystko$Nazwa, fixed = TRUE)
+blona_dopochwowa <- grepl("BŁONA DOPOCHWOWA", wszystko$Nazwa, fixed = TRUE)
+srodki_plemnikobojcze <- grepl("ŚRODKI PLEMNIKOBÓJCZE", wszystko$Nazwa, fixed = TRUE)
+srodek_plemnikobojczy <- grepl("ŚRODEK PLEMNIKOBÓJCZY", wszystko$Nazwa, fixed = TRUE)
+
+idx_testy_ciazowe_i_mechaniczne_srodki_antykoncepcyjne <- which(test_ciazowy == 1 | testy_ciazowe == 1 | prezerwatywa == 1 |
+                                                                  prezerwatywy == 1 | kapturki_dopochwowe == 1 | kapturek_dopochwowy == 1 |
+                                                                  blony_dopochwowe == 1 | blona_dopochwowa == 1 | 
+                                                                  srodki_plemnikobojcze == 1 | srodek_plemnikobojczy == 1)
+
+
+
+
+wszystko$Nazwa[idx_testy_ciazowe_i_mechaniczne_srodki_antykoncepcyjne]
+
+srednie[2] <- mean(wszystko$Cena[idx_testy_ciazowe_i_mechaniczne_srodki_antykoncepcyjne])
+
+
+
+wariancje[2] <- var(wszystko$Cena[idx_testy_ciazowe_i_mechaniczne_srodki_antykoncepcyjne])
+
+
+
+nazwy_kategorii[2] <- "Testy ciążowe i mechaniczne środki antykoncepcyjne"
+identyfikatory[2] <- "401"
+
+
+
+
+
+
+
+
+
+
+
+# 5. (indeks: 402, wiersz: 186) Pozostale wyroby medyczne, gdzie indziej niesklasyfikowane
+
+# Tu nie wiem, co dac.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 6. (indeks: 403, wiersz: 187) Okulary korekcyjne i soczewki kontaktowe
+
+okulary <- grepl("OKULARY", wszystko$Nazwa, fixed = TRUE)
+korekcyjne <- grepl("KOREKCYJNE", wszystko$Nazwa, fixed = TRUE)
+soczewki <- grepl("SOCZEWKI", wszystko$Nazwa, fixed = TRUE)
+kontaktowe <- grepl("KONTAKTOWE", wszystko$Nazwa, fixed = TRUE)
+
+idx_okulary_korekcyjne_i_soczewki_kontaktowe <- which((okulary == 1 & korekcyjne == 1) | (soczewki == 1 & kontaktowe == 1))
+
+
+
+
+wszystko$Nazwa[idx_okulary_korekcyjne_i_soczewki_kontaktowe]
+
+# Nie ma w ogole takich rzeczy.
+
+# srednie[3] <- mean(wszystko$Cena[idx_okulary_korekcyjne_i_soczewki_kontaktowe])
+
+
+
+# wariancje[3] <- var(wszystko$Cena[idx_okulary_korekcyjne_i_soczewki_kontaktowe])
+
+
+
+# nazwy_kategorii[3] <- "Okulary korekcyjne i soczewki kontaktowe"
+# identyfikatory[3] <- "403"
+
+
+
+
+
+
+
+# 7. (indeks: 404, wiersz: 188) Aparaty sluchowe
+
+aparat_sluchowy <- grepl("APARAT SŁUCHOWY", wszystko$Nazwa, fixed = TRUE)
+aparaty_sluchowe <- grepl("APARATY SŁUCHOWE", wszystko$Nazwa, fixed = TRUE)
+
+idx_wsz_ap_sl <- which(aparat_sluchowy == 1 | aparaty_sluchowe == 1)
+
+
+
+
+wszystko$Nazwa[idx_wsz_ap_sl]
+
+# Tez brak
+
+# srednie[3] <- mean(wszystko$Cena[idx_wsz_ap_sl])
+
+
+
+# wariancje[3] <- var(wszystko$Cena[idx_wsz_ap_sl])
+
+
+
+# nazwy_kategorii[3] <- "Aparaty słuchowe"
+# identyfikatory[3] <- "404"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kat_sr_war <- data.frame("Nazwa" = nazwy_kategorii, "Srednia" = srednie, "Wariancja" = wariancje)
+# View(kat_sr_war)
+
+# To bylo przy 1-szym tworzeniu tego pliku ze srednimi, teraz po prostu dorzucam nowy wiersz z nowa data, z nowymi srednimi dla tej daty.
+# dane <- matrix("", nrow = 2, ncol = 3)
+# dane <- data.frame(dane)
+# colnames(dane) <- c("", nazwy_kategorii)
+# dane[1, 2:3] <- identyfikatory
+# dane[2, 2:3] <- srednie
+# dane[2, 1] <- as.character(Sys.Date() - 1)
+# write.xlsx(dane, paste0(getwd(), "/apteka_pomocna_Kategorie_z_", Sys.Date() - 1, ".xlsx"))
+# save.image(paste0(getwd(), "/apteka_pomocna_Kategorie_z_", Sys.Date() - 1, ".RData"))
+
+if(dane[nrow(dane), 1] == Sys.Date() - dni_przed)
+{
+  dane[nrow(dane) + 1, ] <- c(as.character(Sys.Date()), kat_sr_war$Srednia)
+  for(i in 2:ncol(dane)){dane[, i] <- as.double(dane[,i])}
+  write.xlsx(dane, paste0(getwd(), "/apteka_pomocna_Kategorie_z_", Sys.Date(), ".xlsx"))
+  save.image(paste0(getwd(), "/apteka_pomocna_Kategorie_z_", Sys.Date(), ".RData"))
+  write.xlsx(wszystko, paste0(getwd(), "/apteka_pomocna_", Sys.Date(), ".xlsx"))
+}
