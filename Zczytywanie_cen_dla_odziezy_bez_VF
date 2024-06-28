@@ -1,0 +1,389 @@
+rm(list = ls())
+
+library(lubridate)
+dz_tyg <- wday(Sys.Date(), week_start=1)
+if(dz_tyg %in% 1:3)
+{
+  dni_przed <- 5
+}
+if(dz_tyg %in% 4:5)
+{
+  dni_przed <- 3
+}
+
+load(paste0(getwd(), "/Wszystkie_odzieze_bez_VF_Kategorie_z_", Sys.Date() - dni_przed, ".RData"))
+
+dz_tyg <- wday(Sys.Date(), week_start=1)
+if(dz_tyg %in% 1:3)
+{
+  dni_przed <- 5
+}
+if(dz_tyg %in% 4:5)
+{
+  dni_przed <- 3
+}
+
+# Zczytywanie cen
+
+library(rvest)
+library(dplyr)
+library(openxlsx)
+
+
+
+
+
+
+
+
+
+
+
+edoti_ceny <- read.xlsx(paste0(getwd(), "/edoti_", Sys.Date(), ".xlsx"))
+niren_just_yuppi_ceny <- read.xlsx(paste0(getwd(), "/niren_just_yuppi_", Sys.Date(), ".xlsx"))
+
+wszystko <- rbind(edoti_ceny, niren_just_yuppi_ceny)
+
+nrow(wszystko)
+nrow(unique(wszystko))
+
+wszystko <- unique(wszystko)
+
+wszystko$Nazwa <- toupper(wszystko$Nazwa)
+
+wszystko$Cena <- as.double(wszystko$Cena)
+
+srednie <- rep(0, 6)
+wariancje <- rep(0, 6)
+nazwy_kategorii <- rep("", 6)
+identyfikatory <- rep("", 6)
+
+
+
+
+
+
+
+
+# 1. (indeks: 201, wiersz: 102) Ubiory meskie
+
+czapka <- grepl("CZAPKA", wszystko$Nazwa, fixed = TRUE)
+kamizelka <- grepl("KAMIZELKA", wszystko$Nazwa, fixed = TRUE)
+koszula <- grepl("KOSZULA", wszystko$Nazwa, fixed = TRUE)
+koszulka <- grepl("KOSZULKA", wszystko$Nazwa, fixed = TRUE)
+bluza <- grepl("BLUZA", wszystko$Nazwa, fixed = TRUE)
+bluzka <- grepl("BLUZKA", wszystko$Nazwa, fixed = TRUE)
+garnitur <- grepl("GARNITUR", wszystko$Nazwa, fixed = TRUE)
+spodnie <- grepl("SPODNIE", wszystko$Nazwa, fixed = TRUE)
+spodenki <- grepl("SPODENKI", wszystko$Nazwa, fixed = TRUE)
+szalik <- grepl("SZALIK", wszystko$Nazwa, fixed = TRUE)
+tshirt <- grepl("T-SHIRT", wszystko$Nazwa, fixed = TRUE)
+zakiet <- grepl("ŻAKIET", wszystko$Nazwa, fixed = TRUE)
+sukienka <- grepl("SUKIENKA", wszystko$Nazwa, fixed = TRUE)
+spodnica <- grepl("SPÓDNICA", wszystko$Nazwa, fixed = TRUE)
+spodniczka <- grepl("SPÓDNICZKA", wszystko$Nazwa, fixed = TRUE)
+meskie <- grepl("MĘSKIE", wszystko$Nazwa, fixed = TRUE)
+meska <- grepl("MĘSKA", wszystko$Nazwa, fixed = TRUE)
+meski <- grepl("MĘSKI", wszystko$Nazwa, fixed = TRUE)
+
+idx_ubiory_meskie <- which((czapka == 1 & meska == 1) | (kamizelka == 1 & meska == 1) | (koszula == 1 & meska == 1) | 
+                             (koszulka == 1 & meska == 1) | (bluza == 1 & meska == 1) | (bluzka == 1 & meska == 1) | 
+                             (garnitur == 1 & meski == 1) | (spodnie == 1 & meskie == 1) | (spodenki == 1 & meskie == 1) | 
+                             (szalik == 1 & meski == 1) | (tshirt == 1 & meski == 1) | (zakiet == 1 & meski == 1) |
+                             (sukienka == 1 & meska == 1) | (spodnica == 1 & meska == 1) | (spodniczka == 1 & meska == 1))
+
+
+# wszystko$Nazwa[idx_ubiory_meskie]
+
+
+
+srednie[1] <- mean(wszystko$Cena[idx_ubiory_meskie])
+
+
+
+wariancje[1] <- var(wszystko$Cena[idx_ubiory_meskie])
+
+
+
+nazwy_kategorii[1] <- "Ubiory męskie"
+identyfikatory[1] <- "201"
+
+
+
+
+
+
+
+
+
+
+
+
+# 2. (indeks: 202, wiersz: 103) Bielizna meska
+
+bokserki <- grepl("BOKSERKI", wszystko$Nazwa, fixed = TRUE)
+kapielowki <- grepl("KĄPIELÓWKI", wszystko$Nazwa, fixed = TRUE)
+pizama <- grepl("PIŻAMA", wszystko$Nazwa, fixed = TRUE)
+pizamka <- grepl("PIŻAMKA", wszystko$Nazwa, fixed = TRUE)
+kostium <- grepl("KOSTIUM", wszystko$Nazwa, fixed = TRUE)
+kapielowy <- grepl("KĄPIELOWY", wszystko$Nazwa, fixed = TRUE)
+stringi <- grepl("STRINGI", wszystko$Nazwa, fixed = TRUE)
+biustonosz <- grepl("BIUSTONOSZ", wszystko$Nazwa, fixed = TRUE)
+meskie <- grepl("MĘSKIE", wszystko$Nazwa, fixed = TRUE)
+meska <- grepl("MĘSKA", wszystko$Nazwa, fixed = TRUE)
+meski <- grepl("MĘSKI", wszystko$Nazwa, fixed = TRUE)
+
+idx_bielizna_meska <- which((bokserki == 1 & meskie == 1) | (pizama == 1 & meska == 1) | (pizamka == 1 & meska == 1) | 
+                              (kapielowki == 1 & meskie == 1) | (kostium == 1 & kapielowy == 1 & meski == 1) |
+                              (stringi == 1 & meskie == 1) | (biustonosz == 1 & meski == 1))
+
+wszystko$Nazwa[idx_bielizna_meska]
+
+
+srednie[2] <- mean(wszystko$Cena[idx_bielizna_meska])
+wariancje[2] <- var(wszystko$Cena[idx_bielizna_meska])
+nazwy_kategorii[2] <- "Bielizna męska"
+identyfikatory[2] <- "202"
+
+
+
+
+
+
+
+
+
+
+
+
+# 3. (indeks: 203, wiersz: 104) Wyroby ponczosznicze meskie
+
+rajstopy <- grepl("RAJSTOPY", wszystko$Nazwa, fixed = TRUE)
+kalesony <- grepl("KALESONY", wszystko$Nazwa, fixed = TRUE)
+ponczochy <- grepl("POŃCZOCHY", wszystko$Nazwa, fixed = TRUE)
+zakolanowki <- grepl("ZAKOLANÓWKI", wszystko$Nazwa, fixed = TRUE)
+skarpety <- grepl("SKARPETY", wszystko$Nazwa, fixed = TRUE)
+skarpetki <- grepl("SKARPETKI", wszystko$Nazwa, fixed = TRUE)
+podkolanowki <- grepl("PODKOLANÓWKI", wszystko$Nazwa, fixed = TRUE)
+legginsy <- grepl("LEGGINSY", wszystko$Nazwa, fixed = TRUE)
+stopki <- grepl("STOPKI", wszystko$Nazwa, fixed = TRUE)
+majtki <- grepl("MAJTKI", wszystko$Nazwa, fixed = TRUE)
+figi <- grepl("FIGI", wszystko$Nazwa, fixed = TRUE)
+meskie <- grepl("MĘSKIE", wszystko$Nazwa, fixed = TRUE)
+meska <- grepl("MĘSKA", wszystko$Nazwa, fixed = TRUE)
+meski <- grepl("MĘSKI", wszystko$Nazwa, fixed = TRUE)
+
+idx_wyroby_ponczosznicze_meskie <- which((rajstopy == 1 & meskie == 1) | (kalesony == 1 & meskie == 1) | (ponczochy == 1 & meskie == 1) |
+                                           (zakolanowki == 1 & meskie == 1) | (skarpety == 1 & meskie == 1) | (skarpetki == 1 & meskie == 1) |
+                                           (podkolanowki == 1 & meskie == 1) | (legginsy == 1 & meskie == 1) | (stopki == 1 & meskie == 1) |
+                                           (majtki == 1 & meskie == 1) | (figi == 1 & meskie == 1))
+
+wszystko$Nazwa[idx_wyroby_ponczosznicze_meskie]
+
+
+srednie[3] <- mean(wszystko$Cena[idx_wyroby_ponczosznicze_meskie])
+wariancje[3] <- var(wszystko$Cena[idx_wyroby_ponczosznicze_meskie])
+nazwy_kategorii[3] <- "Wyroby pończosznicze męskie"
+identyfikatory[3] <- "203"
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 4. (indeks: 204, wiersz: 105) Ubiory damskie
+
+czapka <- grepl("CZAPKA", wszystko$Nazwa, fixed = TRUE)
+kamizelka <- grepl("KAMIZELKA", wszystko$Nazwa, fixed = TRUE)
+koszula <- grepl("KOSZULA", wszystko$Nazwa, fixed = TRUE)
+koszulka <- grepl("KOSZULKA", wszystko$Nazwa, fixed = TRUE)
+bluza <- grepl("BLUZA", wszystko$Nazwa, fixed = TRUE)
+bluzka <- grepl("BLUZKA", wszystko$Nazwa, fixed = TRUE)
+garnitur <- grepl("GARNITUR", wszystko$Nazwa, fixed = TRUE)
+spodnie <- grepl("SPODNIE", wszystko$Nazwa, fixed = TRUE)
+spodenki <- grepl("SPODENKI", wszystko$Nazwa, fixed = TRUE)
+szalik <- grepl("SZALIK", wszystko$Nazwa, fixed = TRUE)
+tshirt <- grepl("T-SHIRT", wszystko$Nazwa, fixed = TRUE)
+zakiet <- grepl("ŻAKIET", wszystko$Nazwa, fixed = TRUE)
+sukienka <- grepl("SUKIENKA", wszystko$Nazwa, fixed = TRUE)
+spodnica <- grepl("SPÓDNICA", wszystko$Nazwa, fixed = TRUE)
+spodniczka <- grepl("SPÓDNICZKA", wszystko$Nazwa, fixed = TRUE)
+damskie <- grepl("DAMSKIE", wszystko$Nazwa, fixed = TRUE)
+damska <- grepl("DAMSKA", wszystko$Nazwa, fixed = TRUE)
+damski <- grepl("DAMSKI", wszystko$Nazwa, fixed = TRUE)
+
+idx_ubiory_damskie <- which((czapka == 1 & damska == 1) | (kamizelka == 1 & damska == 1) | (koszula == 1 & damska == 1) | 
+                              (koszulka == 1 & damska == 1) | (bluza == 1 & damska == 1) | (bluzka == 1 & damska == 1) | 
+                              (garnitur == 1 & damski == 1) | (spodnie == 1 & damskie == 1) | (spodenki == 1 & damskie == 1) | 
+                              (szalik == 1 & damski == 1) | (tshirt == 1 & damski == 1) | (zakiet == 1 & damski == 1) |
+                              (sukienka == 1 & damska == 1) | (spodnica == 1 & damska == 1) | (spodniczka == 1 & damska == 1))
+
+
+# wszystko$Nazwa[idx_ubiory_damskie]
+
+
+
+srednie[4] <- mean(wszystko$Cena[idx_ubiory_damskie])
+
+
+
+wariancje[4] <- var(wszystko$Cena[idx_ubiory_damskie])
+
+
+
+nazwy_kategorii[4] <- "Ubiory damskie"
+identyfikatory[4] <- "204"
+
+
+
+
+
+
+
+
+
+
+
+
+# 5. (indeks: 205, wiersz: 106) Bielizna damska
+
+bokserki <- grepl("BOKSERKI", wszystko$Nazwa, fixed = TRUE)
+kapielowki <- grepl("KĄPIELÓWKI", wszystko$Nazwa, fixed = TRUE)
+pizama <- grepl("PIŻAMA", wszystko$Nazwa, fixed = TRUE)
+pizamka <- grepl("PIŻAMKA", wszystko$Nazwa, fixed = TRUE)
+kostium <- grepl("KOSTIUM", wszystko$Nazwa, fixed = TRUE)
+kapielowy <- grepl("KĄPIELOWY", wszystko$Nazwa, fixed = TRUE)
+stringi <- grepl("STRINGI", wszystko$Nazwa, fixed = TRUE)
+biustonosz <- grepl("BIUSTONOSZ", wszystko$Nazwa, fixed = TRUE)
+damskie <- grepl("DAMSKIE", wszystko$Nazwa, fixed = TRUE)
+damska <- grepl("DAMSKA", wszystko$Nazwa, fixed = TRUE)
+damski <- grepl("DAMSKI", wszystko$Nazwa, fixed = TRUE)
+
+idx_bielizna_damska <- which((bokserki == 1 & damskie == 1) | (pizama == 1 & damska == 1) | (pizamka == 1 & damska == 1) | 
+                               (kapielowki == 1 & damskie == 1) | (kostium == 1 & kapielowy == 1 & damski == 1) | (stringi == 1 & damskie == 1) |
+                               (biustonosz == 1 & damski == 1))
+
+wszystko$Nazwa[idx_bielizna_damska]
+
+
+srednie[5] <- mean(wszystko$Cena[idx_bielizna_damska])
+wariancje[5] <- var(wszystko$Cena[idx_bielizna_damska])
+nazwy_kategorii[5] <- "Bielizna damska"
+identyfikatory[5] <- "205"
+
+
+
+
+
+
+
+
+
+
+
+
+# 6. (indeks: 206, wiersz: 107) Wyroby ponczosznicze damskie
+
+rajstopy <- grepl("RAJSTOPY", wszystko$Nazwa, fixed = TRUE)
+kalesony <- grepl("KALESONY", wszystko$Nazwa, fixed = TRUE)
+ponczochy <- grepl("POŃCZOCHY", wszystko$Nazwa, fixed = TRUE)
+zakolanowki <- grepl("ZAKOLANÓWKI", wszystko$Nazwa, fixed = TRUE)
+skarpety <- grepl("SKARPETY", wszystko$Nazwa, fixed = TRUE)
+skarpetki <- grepl("SKARPETKI", wszystko$Nazwa, fixed = TRUE)
+podkolanowki <- grepl("PODKOLANÓWKI", wszystko$Nazwa, fixed = TRUE)
+legginsy <- grepl("LEGGINSY", wszystko$Nazwa, fixed = TRUE)
+stopki <- grepl("STOPKI", wszystko$Nazwa, fixed = TRUE)
+majtki <- grepl("MAJTKI", wszystko$Nazwa, fixed = TRUE)
+figi <- grepl("FIGI", wszystko$Nazwa, fixed = TRUE)
+damskie <- grepl("DAMSKIE", wszystko$Nazwa, fixed = TRUE)
+damska <- grepl("DAMSKA", wszystko$Nazwa, fixed = TRUE)
+damski <- grepl("DAMSKI", wszystko$Nazwa, fixed = TRUE)
+
+idx_wyroby_ponczosznicze_damskie <- which((rajstopy == 1 & damskie == 1) | (kalesony == 1 & damskie == 1) | (ponczochy == 1 & damskie == 1) |
+                                            (zakolanowki == 1 & damskie == 1) | (skarpety == 1 & damskie == 1) | (skarpetki == 1 & damskie == 1) |
+                                            (podkolanowki == 1 & damskie == 1) | (legginsy == 1 & damskie == 1) | (stopki == 1 & damskie == 1) |
+                                            (majtki == 1 & damskie == 1) | (figi == 1 & damskie == 1))
+
+wszystko$Nazwa[idx_wyroby_ponczosznicze_damskie]
+
+
+srednie[6] <- mean(wszystko$Cena[idx_wyroby_ponczosznicze_damskie])
+wariancje[6] <- var(wszystko$Cena[idx_wyroby_ponczosznicze_damskie])
+nazwy_kategorii[6] <- "Wyroby pończosznicze damskie"
+identyfikatory[6] <- "206"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kat_sr_war <- data.frame("Nazwa" = nazwy_kategorii, "Srednia" = srednie, "Wariancja" = wariancje)
+# View(kat_sr_war)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# To bylo przy 1-szym tworzeniu tego pliku ze srednimi, teraz po prostu dorzucam nowy wiersz z nowa data, z nowymi srednimi dla tej daty.
+# dane <- matrix("", nrow = 2, ncol = 7)
+# dane <- data.frame(dane)
+# colnames(dane) <- c("", nazwy_kategorii)
+# dane[1, 2:7] <- identyfikatory
+# dane[2, 2:7] <- srednie
+# dane[2, 1] <- as.character(Sys.Date() - 2)
+# write.xlsx(dane, paste0(getwd(), "/Wszystkie_odzieze_bez_VF_Kategorie_z_", Sys.Date() - 2, ".xlsx"))
+# save.image(paste0(getwd(), "/Wszystkie_odzieze_bez_VF_Kategorie_z_", Sys.Date() - 2, ".RData"))
+# write.xlsx(wszystko, paste0(getwd(), "/Wszystkie_odzieze_bez_VF_", Sys.Date() - 2, ".xlsx"))
+
+if(dane[nrow(dane), 1] == Sys.Date() - dni_przed)
+{
+  dane[nrow(dane) + 1, ] <- c(as.character(Sys.Date()), kat_sr_war$Srednia)
+  for(i in 2:ncol(dane)){dane[, i] <- as.double(dane[,i])}
+  write.xlsx(dane, paste0(getwd(), "/Wszystkie_odzieze_bez_VF_Kategorie_z_", Sys.Date(), ".xlsx"))
+  save.image(paste0(getwd(), "/Wszystkie_odzieze_bez_VF_Kategorie_z_", Sys.Date(), ".RData"))
+  write.xlsx(wszystko, paste0(getwd(), "/Wszystkie_odzieze_bez_VF_", Sys.Date(), ".xlsx"))
+  write.xlsx(dane, paste0("W:/Osobiste/Kuba_Z/Scrapping/Odzież (do zczytania)/Szeregi czasowe/Wszystkie_odzieze_bez_VF_Kategorie_z_", Sys.Date(), ".xlsx"))
+  write.xlsx(dane, paste0("W:/Osobiste/Kuba_Z/Scrapping/Odzież (do zczytania)/Szeregi czasowe/Wszystkie_odzieze_bez_VF_Kategorie.xlsx"))
+}
