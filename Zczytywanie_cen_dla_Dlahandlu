@@ -1,0 +1,3584 @@
+# Zczytywanie cen
+
+rm(list = ls())
+
+library(lubridate)
+
+dz_tyg <- wday(Sys.Date(), week_start=1)
+if(dz_tyg %in% 1:3)
+{
+  dni_przed <- 5
+}
+if(dz_tyg %in% 4:5)
+{
+  dni_przed <- 3
+}
+
+load(paste0(getwd(), "/Dlahandlu_Kategorie_z_", Sys.Date() - dni_przed, ".RData"))
+
+dz_tyg <- wday(Sys.Date(), week_start=1)
+if(dz_tyg %in% 1:3)
+{
+  dni_przed <- 5
+}
+if(dz_tyg %in% 4:5)
+{
+  dni_przed <- 3
+}
+
+library(rvest)
+library(dplyr)
+library(openxlsx)
+
+
+# Dlahandlu
+
+# Pieczywo
+
+adres_pieczywo <- "https://www.dlahandlu.pl/koszyk/typ/pieczywo,1.html"
+link_pieczywo <- read_html(adres_pieczywo)
+
+
+link_pieczywo %>% html_elements(".basket-product-data-price") %>% html_text2()
+# [1] "3,78" "4,63" "7,98" "0,26" "0,33" "0,50"
+
+link_pieczywo %>% html_elements(".basket-box-title-link") %>% html_text2()
+# [1] "Chleb 1000 g"        "Bułka kajzerka 50 g"
+
+(wyniki_pieczywo <- link_pieczywo %>% html_elements(".basket-box-title-link, .basket-product-data-price") %>% html_text2())
+# [1] "Chleb 1000 g"        "3,78"                "4,63"                "7,98"                "Bułka kajzerka 50 g" "0,26"               
+# [7] "0,33"                "0,50"
+
+
+
+idx_nazwa <- which(1:length(wyniki_pieczywo) %% 4 == 1)
+idx_min <- which(1:length(wyniki_pieczywo) %% 4 == 2)
+idx_mean <- which(1:length(wyniki_pieczywo) %% 4 == 3)
+idx_max <- which(1:length(wyniki_pieczywo) %% 4 == 0)
+
+
+
+wyniki_pieczywo[idx_min] <- gsub(",", ".", wyniki_pieczywo[idx_min])
+wyniki_pieczywo[idx_min] <- as.double(wyniki_pieczywo[idx_min])
+
+wyniki_pieczywo[idx_mean] <- gsub(",", ".", wyniki_pieczywo[idx_mean])
+wyniki_pieczywo[idx_mean] <- as.double(wyniki_pieczywo[idx_mean])
+
+wyniki_pieczywo[idx_max] <- gsub(",", ".", wyniki_pieczywo[idx_max])
+wyniki_pieczywo[idx_max] <- as.double(wyniki_pieczywo[idx_max])
+
+
+wyniki_pieczywo[idx_nazwa]
+# [1] "Chleb 1000 g"        "Bułka kajzerka 50 g"
+
+
+
+pieczywo <- data.frame(Nazwa = wyniki_pieczywo[idx_nazwa], Minimum = wyniki_pieczywo[idx_min], Średnia = wyniki_pieczywo[idx_mean], 
+                       Maksimum = wyniki_pieczywo[idx_max])
+
+
+
+
+
+
+
+
+
+# Slodycze
+
+adres_slodycze <- "https://www.dlahandlu.pl/koszyk/typ/slodycze,3.html"
+link_slodycze <- read_html(adres_slodycze)
+
+(wyniki_slodycze <- link_slodycze %>% html_elements(".basket-box-title-link, .basket-product-data-price") %>% html_text2())
+
+
+idx_nazwa <- which(1:length(wyniki_slodycze) %% 4 == 1)
+idx_min <- which(1:length(wyniki_slodycze) %% 4 == 2)
+idx_mean <- which(1:length(wyniki_slodycze) %% 4 == 3)
+idx_max <- which(1:length(wyniki_slodycze) %% 4 == 0)
+
+
+
+wyniki_slodycze[idx_min] <- gsub(",", ".", wyniki_slodycze[idx_min])
+wyniki_slodycze[idx_min] <- as.double(wyniki_slodycze[idx_min])
+
+wyniki_slodycze[idx_mean] <- gsub(",", ".", wyniki_slodycze[idx_mean])
+wyniki_slodycze[idx_mean] <- as.double(wyniki_slodycze[idx_mean])
+
+wyniki_slodycze[idx_max] <- gsub(",", ".", wyniki_slodycze[idx_max])
+wyniki_slodycze[idx_max] <- as.double(wyniki_slodycze[idx_max])
+
+
+
+slodycze <- data.frame(Nazwa = wyniki_slodycze[idx_nazwa], Minimum = wyniki_slodycze[idx_min], Średnia = wyniki_slodycze[idx_mean], 
+                       Maksimum = wyniki_slodycze[idx_max])
+
+
+
+
+
+
+
+# Nabial
+
+adres_nabial <- "https://www.dlahandlu.pl/koszyk/typ/nabial,5.html"
+link_nabial <- read_html(adres_nabial)
+
+(wyniki_nabial <- link_nabial %>% html_elements(".basket-box-title-link, .basket-product-data-price") %>% html_text2())
+
+
+idx_nazwa <- which(1:length(wyniki_nabial) %% 4 == 1)
+idx_min <- which(1:length(wyniki_nabial) %% 4 == 2)
+idx_mean <- which(1:length(wyniki_nabial) %% 4 == 3)
+idx_max <- which(1:length(wyniki_nabial) %% 4 == 0)
+
+
+
+wyniki_nabial[idx_min] <- gsub(",", ".", wyniki_nabial[idx_min])
+wyniki_nabial[idx_min] <- as.double(wyniki_nabial[idx_min])
+
+wyniki_nabial[idx_mean] <- gsub(",", ".", wyniki_nabial[idx_mean])
+wyniki_nabial[idx_mean] <- as.double(wyniki_nabial[idx_mean])
+
+wyniki_nabial[idx_max] <- gsub(",", ".", wyniki_nabial[idx_max])
+wyniki_nabial[idx_max] <- as.double(wyniki_nabial[idx_max])
+
+
+
+nabial <- data.frame(Nazwa = wyniki_nabial[idx_nazwa], Minimum = wyniki_nabial[idx_min], Średnia = wyniki_nabial[idx_mean], 
+                     Maksimum = wyniki_nabial[idx_max])
+
+
+
+
+
+
+
+
+# Sypkie
+
+adres_sypkie <- "https://www.dlahandlu.pl/koszyk/typ/sypkie,8.html"
+link_sypkie <- read_html(adres_sypkie)
+
+(wyniki_sypkie <- link_sypkie %>% html_elements(".basket-box-title-link, .basket-product-data-price") %>% html_text2())
+
+
+idx_nazwa <- which(1:length(wyniki_sypkie) %% 4 == 1)
+idx_min <- which(1:length(wyniki_sypkie) %% 4 == 2)
+idx_mean <- which(1:length(wyniki_sypkie) %% 4 == 3)
+idx_max <- which(1:length(wyniki_sypkie) %% 4 == 0)
+
+
+
+wyniki_sypkie[idx_min] <- gsub(",", ".", wyniki_sypkie[idx_min])
+wyniki_sypkie[idx_min] <- as.double(wyniki_sypkie[idx_min])
+
+wyniki_sypkie[idx_mean] <- gsub(",", ".", wyniki_sypkie[idx_mean])
+wyniki_sypkie[idx_mean] <- as.double(wyniki_sypkie[idx_mean])
+
+wyniki_sypkie[idx_max] <- gsub(",", ".", wyniki_sypkie[idx_max])
+wyniki_sypkie[idx_max] <- as.double(wyniki_sypkie[idx_max])
+
+
+
+sypkie <- data.frame(Nazwa = wyniki_sypkie[idx_nazwa], Minimum = wyniki_sypkie[idx_min], Średnia = wyniki_sypkie[idx_mean], 
+                     Maksimum = wyniki_sypkie[idx_max])
+
+
+
+
+
+# Owoce
+
+
+
+adres_owoce <- "https://www.dlahandlu.pl/koszyk/typ/owoce,10.html"
+link_owoce <- read_html(adres_owoce)
+
+(wyniki_owoce <- link_owoce %>% html_elements(".basket-box-title-link, .basket-product-data-price") %>% html_text2())
+
+
+idx_nazwa <- which(1:length(wyniki_owoce) %% 4 == 1)
+idx_min <- which(1:length(wyniki_owoce) %% 4 == 2)
+idx_mean <- which(1:length(wyniki_owoce) %% 4 == 3)
+idx_max <- which(1:length(wyniki_owoce) %% 4 == 0)
+
+
+
+wyniki_owoce[idx_min] <- gsub(",", ".", wyniki_owoce[idx_min])
+wyniki_owoce[idx_min] <- as.double(wyniki_owoce[idx_min])
+
+wyniki_owoce[idx_mean] <- gsub(",", ".", wyniki_owoce[idx_mean])
+wyniki_owoce[idx_mean] <- as.double(wyniki_owoce[idx_mean])
+
+wyniki_owoce[idx_max] <- gsub(",", ".", wyniki_owoce[idx_max])
+wyniki_owoce[idx_max] <- as.double(wyniki_owoce[idx_max])
+
+
+
+owoce <- data.frame(Nazwa = wyniki_owoce[idx_nazwa], Minimum = wyniki_owoce[idx_min], Średnia = wyniki_owoce[idx_mean], 
+                    Maksimum = wyniki_owoce[idx_max])
+
+
+
+
+
+# Uzywki
+
+adres_uzywki <- "https://www.dlahandlu.pl/koszyk/typ/uzywki,2.html"
+link_uzywki <- read_html(adres_uzywki)
+
+(wyniki_uzywki <- link_uzywki %>% html_elements(".basket-box-title-link, .basket-product-data-price") %>% html_text2())
+
+
+idx_nazwa <- which(1:length(wyniki_uzywki) %% 4 == 1)
+idx_min <- which(1:length(wyniki_uzywki) %% 4 == 2)
+idx_mean <- which(1:length(wyniki_uzywki) %% 4 == 3)
+idx_max <- which(1:length(wyniki_uzywki) %% 4 == 0)
+
+
+
+wyniki_uzywki[idx_min] <- gsub(",", ".", wyniki_uzywki[idx_min])
+wyniki_uzywki[idx_min] <- as.double(wyniki_uzywki[idx_min])
+
+wyniki_uzywki[idx_mean] <- gsub(",", ".", wyniki_uzywki[idx_mean])
+wyniki_uzywki[idx_mean] <- as.double(wyniki_uzywki[idx_mean])
+
+wyniki_uzywki[idx_max] <- gsub(",", ".", wyniki_uzywki[idx_max])
+wyniki_uzywki[idx_max] <- as.double(wyniki_uzywki[idx_max])
+
+
+
+uzywki <- data.frame(Nazwa = wyniki_uzywki[idx_nazwa], Minimum = wyniki_uzywki[idx_min], Średnia = wyniki_uzywki[idx_mean], 
+                     Maksimum = wyniki_uzywki[idx_max])
+
+
+
+
+# Napoje
+
+adres_napoje <- "https://www.dlahandlu.pl/koszyk/typ/napoje,7.html"
+link_napoje <- read_html(adres_napoje)
+
+(wyniki_napoje <- link_napoje %>% html_elements(".basket-box-title-link, .basket-product-data-price") %>% html_text2())
+
+
+idx_nazwa <- which(1:length(wyniki_napoje) %% 4 == 1)
+idx_min <- which(1:length(wyniki_napoje) %% 4 == 2)
+idx_mean <- which(1:length(wyniki_napoje) %% 4 == 3)
+idx_max <- which(1:length(wyniki_napoje) %% 4 == 0)
+
+
+
+wyniki_napoje[idx_min] <- gsub(",", ".", wyniki_napoje[idx_min])
+wyniki_napoje[idx_min] <- as.double(wyniki_napoje[idx_min])
+
+wyniki_napoje[idx_mean] <- gsub(",", ".", wyniki_napoje[idx_mean])
+wyniki_napoje[idx_mean] <- as.double(wyniki_napoje[idx_mean])
+
+wyniki_napoje[idx_max] <- gsub(",", ".", wyniki_napoje[idx_max])
+wyniki_napoje[idx_max] <- as.double(wyniki_napoje[idx_max])
+
+
+
+napoje <- data.frame(Nazwa = wyniki_napoje[idx_nazwa], Minimum = wyniki_napoje[idx_min], Średnia = wyniki_napoje[idx_mean], 
+                     Maksimum = wyniki_napoje[idx_max])
+
+
+
+
+# Tluszcze
+
+adres_tluszcze <- "https://www.dlahandlu.pl/koszyk/typ/tluszcze,4.html"
+link_tluszcze <- read_html(adres_tluszcze)
+
+(wyniki_tluszcze <- link_tluszcze %>% html_elements(".basket-box-title-link, .basket-product-data-price") %>% html_text2())
+
+
+idx_nazwa <- which(1:length(wyniki_tluszcze) %% 4 == 1)
+idx_min <- which(1:length(wyniki_tluszcze) %% 4 == 2)
+idx_mean <- which(1:length(wyniki_tluszcze) %% 4 == 3)
+idx_max <- which(1:length(wyniki_tluszcze) %% 4 == 0)
+
+
+
+wyniki_tluszcze[idx_min] <- gsub(",", ".", wyniki_tluszcze[idx_min])
+wyniki_tluszcze[idx_min] <- as.double(wyniki_tluszcze[idx_min])
+
+wyniki_tluszcze[idx_mean] <- gsub(",", ".", wyniki_tluszcze[idx_mean])
+wyniki_tluszcze[idx_mean] <- as.double(wyniki_tluszcze[idx_mean])
+
+wyniki_tluszcze[idx_max] <- gsub(",", ".", wyniki_tluszcze[idx_max])
+wyniki_tluszcze[idx_max] <- as.double(wyniki_tluszcze[idx_max])
+
+
+
+tluszcze <- data.frame(Nazwa = wyniki_tluszcze[idx_nazwa], Minimum = wyniki_tluszcze[idx_min], Średnia = wyniki_tluszcze[idx_mean], 
+                       Maksimum = wyniki_tluszcze[idx_max])
+
+
+
+
+
+# Chemia
+
+adres_chemia <- "https://www.dlahandlu.pl/koszyk/typ/chemia,12.html"
+link_chemia <- read_html(adres_chemia)
+
+(wyniki_chemia <- link_chemia %>% html_elements(".basket-box-title-link, .basket-product-data-price") %>% html_text2())
+
+
+idx_nazwa <- which(1:length(wyniki_chemia) %% 4 == 1)
+idx_min <- which(1:length(wyniki_chemia) %% 4 == 2)
+idx_mean <- which(1:length(wyniki_chemia) %% 4 == 3)
+idx_max <- which(1:length(wyniki_chemia) %% 4 == 0)
+
+
+
+wyniki_chemia[idx_min] <- gsub(",", ".", wyniki_chemia[idx_min])
+wyniki_chemia[idx_min] <- as.double(wyniki_chemia[idx_min])
+
+wyniki_chemia[idx_mean] <- gsub(",", ".", wyniki_chemia[idx_mean])
+wyniki_chemia[idx_mean] <- as.double(wyniki_chemia[idx_mean])
+
+wyniki_chemia[idx_max] <- gsub(",", ".", wyniki_chemia[idx_max])
+wyniki_chemia[idx_max] <- as.double(wyniki_chemia[idx_max])
+
+
+
+chemia <- data.frame(Nazwa = wyniki_chemia[idx_nazwa], Minimum = wyniki_chemia[idx_min], Średnia = wyniki_chemia[idx_mean], 
+                     Maksimum = wyniki_chemia[idx_max])
+
+
+
+# Dodatki
+
+adres_dodatki <- "https://www.dlahandlu.pl/koszyk/typ/dodatki,6.html"
+link_dodatki <- read_html(adres_dodatki)
+
+(wyniki_dodatki <- link_dodatki %>% html_elements(".basket-box-title-link, .basket-product-data-price") %>% html_text2())
+
+
+idx_nazwa <- which(1:length(wyniki_dodatki) %% 4 == 1)
+idx_min <- which(1:length(wyniki_dodatki) %% 4 == 2)
+idx_mean <- which(1:length(wyniki_dodatki) %% 4 == 3)
+idx_max <- which(1:length(wyniki_dodatki) %% 4 == 0)
+
+
+
+wyniki_dodatki[idx_min] <- gsub(",", ".", wyniki_dodatki[idx_min])
+wyniki_dodatki[idx_min] <- as.double(wyniki_dodatki[idx_min])
+
+wyniki_dodatki[idx_mean] <- gsub(",", ".", wyniki_dodatki[idx_mean])
+wyniki_dodatki[idx_mean] <- as.double(wyniki_dodatki[idx_mean])
+
+wyniki_dodatki[idx_max] <- gsub(",", ".", wyniki_dodatki[idx_max])
+wyniki_dodatki[idx_max] <- as.double(wyniki_dodatki[idx_max])
+
+
+
+dodatki <- data.frame(Nazwa = wyniki_dodatki[idx_nazwa], Minimum = wyniki_dodatki[idx_min], Średnia = wyniki_dodatki[idx_mean], 
+                      Maksimum = wyniki_dodatki[idx_max])
+
+
+
+
+# Mieso
+
+adres_mieso <- "https://www.dlahandlu.pl/koszyk/typ/miesa,9.html"
+link_mieso <- read_html(adres_mieso)
+
+(wyniki_mieso <- link_mieso %>% html_elements(".basket-box-title-link, .basket-product-data-price") %>% html_text2())
+
+
+idx_nazwa <- which(1:length(wyniki_mieso) %% 4 == 1)
+idx_min <- which(1:length(wyniki_mieso) %% 4 == 2)
+idx_mean <- which(1:length(wyniki_mieso) %% 4 == 3)
+idx_max <- which(1:length(wyniki_mieso) %% 4 == 0)
+
+
+
+wyniki_mieso[idx_min] <- gsub(",", ".", wyniki_mieso[idx_min])
+wyniki_mieso[idx_min] <- as.double(wyniki_mieso[idx_min])
+
+wyniki_mieso[idx_mean] <- gsub(",", ".", wyniki_mieso[idx_mean])
+wyniki_mieso[idx_mean] <- as.double(wyniki_mieso[idx_mean])
+
+wyniki_mieso[idx_max] <- gsub(",", ".", wyniki_mieso[idx_max])
+wyniki_mieso[idx_max] <- as.double(wyniki_mieso[idx_max])
+
+
+
+mieso <- data.frame(Nazwa = wyniki_mieso[idx_nazwa], Minimum = wyniki_mieso[idx_min], Średnia = wyniki_mieso[idx_mean], 
+                    Maksimum = wyniki_mieso[idx_max])
+
+
+
+
+# Warzywa
+
+adres_warzywa <- "https://www.dlahandlu.pl/koszyk/typ/warzywa,11.html"
+link_warzywa <- read_html(adres_warzywa)
+
+(wyniki_warzywa <- link_warzywa %>% html_elements(".basket-box-title-link, .basket-product-data-price") %>% html_text2())
+
+
+idx_nazwa <- which(1:length(wyniki_warzywa) %% 4 == 1)
+idx_min <- which(1:length(wyniki_warzywa) %% 4 == 2)
+idx_mean <- which(1:length(wyniki_warzywa) %% 4 == 3)
+idx_max <- which(1:length(wyniki_warzywa) %% 4 == 0)
+
+
+
+wyniki_warzywa[idx_min] <- gsub(",", ".", wyniki_warzywa[idx_min])
+wyniki_warzywa[idx_min] <- as.double(wyniki_warzywa[idx_min])
+
+wyniki_warzywa[idx_mean] <- gsub(",", ".", wyniki_warzywa[idx_mean])
+wyniki_warzywa[idx_mean] <- as.double(wyniki_warzywa[idx_mean])
+
+wyniki_warzywa[idx_max] <- gsub(",", ".", wyniki_warzywa[idx_max])
+wyniki_warzywa[idx_max] <- as.double(wyniki_warzywa[idx_max])
+
+
+
+warzywa <- data.frame(Nazwa = wyniki_warzywa[idx_nazwa], Minimum = wyniki_warzywa[idx_min], Średnia = wyniki_warzywa[idx_mean], 
+                      Maksimum = wyniki_warzywa[idx_max])
+
+
+
+
+
+
+ceny_produktow <- rbind(pieczywo, slodycze, nabial, sypkie, owoce, uzywki, napoje, tluszcze, chemia, dodatki, mieso, warzywa)
+
+
+
+
+dla_handlu_ceny <- data.frame(Nazwa = ceny_produktow$Nazwa, Cena = ceny_produktow$Średnia)
+
+
+
+wszystko <- dla_handlu_ceny
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Ulozenie w kategorie
+
+library(rvest)
+library(dplyr)
+library(openxlsx)
+
+nrow(wszystko)
+nrow(unique(wszystko))
+
+wszystko <- unique(wszystko)
+
+wszystko$Nazwa <- toupper(wszystko$Nazwa)
+
+wszystko$Cena <- as.double(wszystko$Cena)
+
+# 1. Ryz
+
+"Kuba%" %in% c("Kuba","gdugfnruigneruignKubadf")
+grepl(toupper("Kuba"), "rje9gjer9gjerKubajg9j", fixed = TRUE)
+# TRUE
+
+grepl(toupper("Dawid"), "rje9gjer9gjerKubajg9j", fixed = TRUE)
+# FALSE
+
+
+grepl(toupper("rje"), "rje9gjer9gjerKubajg9j", fixed = TRUE)
+# TRUE
+
+
+
+
+nazwy_kategorii <- read.xlsx(paste0(getwd(), "/tylko_nazwy_kategorii.xlsx"))
+identyfikatory <- nazwy_kategorii[1:86, 1]
+nazwy_kategorii <- nazwy_kategorii[1:86, 2]
+
+srednie <- rep(0, 86)
+wariancje <- rep(0, 86)
+
+ryz <- grepl(toupper("Ryż "), wszystko$Nazwa, fixed = TRUE)
+
+length(which(ryz == 1))
+# 52
+
+length(which(ryz == 0))
+# 4268
+
+
+
+idx_ryz <- which(ryz == 1)
+
+idx_nie_ryz <- which(ryz == 0)
+
+
+
+wszystko$Nazwa[idx_ryz]
+
+wszystko$Nazwa[idx_nie_ryz]
+
+
+
+
+srednie[1] <- mean(wszystko$Cena[idx_ryz])
+# 6.386154
+
+
+wariancje[1] <- var(wszystko$Cena[idx_ryz])
+
+
+
+
+
+
+
+# 2. Maka pszenna
+
+maka_pszenna <- grepl(toupper("Mąka pszenna "), wszystko$Nazwa, fixed = TRUE)
+
+length(which(maka_pszenna == 1))
+# 7
+
+length(which(maka_pszenna == 0))
+# 4313
+
+
+
+idx_maka_pszenna <- which(maka_pszenna == 1)
+
+idx_nie_maka_pszenna <- which(maka_pszenna == 0)
+
+
+
+wszystko$Nazwa[idx_maka_pszenna]
+
+wszystko$Nazwa[idx_nie_maka_pszenna]
+
+
+
+
+mean(wszystko$Cena[idx_ryz])
+# 6.386154
+
+
+
+
+srednie[2] <- mean(wszystko$Cena[idx_maka_pszenna])
+# 4.347143
+
+
+wariancje[2] <- var(wszystko$Cena[idx_maka_pszenna])
+# 2.052857
+
+
+
+
+
+
+
+
+# 3. Pozostale maki
+
+
+pozostale_maki <- grepl(toupper("Mąka "), wszystko$Nazwa, fixed = TRUE)
+
+pszenna <- grepl(toupper("pszenna"), wszystko$Nazwa, fixed = TRUE)
+
+length(which(pozostale_maki == 1))
+# 37
+
+length(which(pozostale_maki == 0))
+# 4283
+
+
+
+idx_pozostale_maki <- which(pozostale_maki == 1 & pszenna == 0)
+
+idx_nie_pozostale_maki <- which(!(pozostale_maki == 1 & pszenna == 0))
+
+
+
+wszystko$Nazwa[idx_pozostale_maki]
+
+wszystko$Nazwa[idx_nie_pozostale_maki]
+
+
+
+
+srednie[3] <- mean(wszystko$Cena[idx_pozostale_maki])
+# 7.351905
+
+
+
+
+
+wariancje[3] <- var(wszystko$Cena[idx_pozostale_maki])
+# 18.67448
+
+
+
+
+
+
+
+
+
+# 4. Kasze i ziarna zboz
+
+# To jest do poprawy!
+
+kasza <- grepl(toupper("Kasza "), wszystko$Nazwa, fixed = TRUE)
+
+ziarno_zboza1 <- grepl(toupper("Ryż "), wszystko$Nazwa, fixed = TRUE)
+
+ziarno_zboza2 <- grepl(toupper("Żyto "), wszystko$Nazwa, fixed = TRUE)
+
+ziarno_zboza3 <- grepl(toupper("Pszenżyto "), wszystko$Nazwa, fixed = TRUE)
+
+ziarno_zboza4 <- grepl(toupper("Owies "), wszystko$Nazwa, fixed = TRUE)
+
+ziarno_zboza5 <- grepl(toupper("Orkisz "), wszystko$Nazwa, fixed = TRUE)
+
+ziarno_zboza6 <- grepl(toupper("Pszenica "), wszystko$Nazwa, fixed = TRUE)
+
+length(which(kasza == 1))
+length(which(ziarno_zboza1 == 1))
+length(which(ziarno_zboza2 == 1))
+length(which(ziarno_zboza3 == 1))
+length(which(ziarno_zboza4 == 1))
+length(which(ziarno_zboza5 == 1))
+length(which(ziarno_zboza6 == 1))
+
+
+
+idx_kasza <- which(kasza == 1)
+idx_ziarno_zboza1 <- which(ziarno_zboza1 == 1)
+idx_ziarno_zboza2 <- which(ziarno_zboza2 == 1)
+idx_ziarno_zboza3 <- which(ziarno_zboza3 == 1)
+idx_ziarno_zboza4 <- which(ziarno_zboza4 == 1)
+idx_ziarno_zboza5 <- which(ziarno_zboza5 == 1)
+idx_ziarno_zboza6 <- which(ziarno_zboza6 == 1)
+
+
+
+wszystko$Nazwa[idx_kasza]
+wszystko$Nazwa[idx_ziarno_zboza1]
+wszystko$Nazwa[idx_ziarno_zboza2]
+wszystko$Nazwa[idx_ziarno_zboza3]
+wszystko$Nazwa[idx_ziarno_zboza4]
+wszystko$Nazwa[idx_ziarno_zboza5]
+wszystko$Nazwa[idx_ziarno_zboza6]
+
+
+
+
+idx_kasze_i_ziarna_zboz <- which(kasza == 1 | ziarno_zboza1 == 1 | ziarno_zboza2 == 1 | ziarno_zboza3 == 1 | ziarno_zboza4 == 1 |
+                                   ziarno_zboza5 == 1 | ziarno_zboza6 == 1) 
+
+wszystko$Nazwa[idx_kasze_i_ziarna_zboz]
+
+srednie[4] <- mean(wszystko$Cena[idx_kasze_i_ziarna_zboz])
+# 5.843125
+
+
+
+
+wariancje[4] <- var(wszystko$Cena[idx_kasze_i_ziarna_zboz])
+# 6.86378
+
+
+
+
+
+
+
+
+
+
+
+# 5. Pieczywo
+
+bulka <- grepl(toupper("Bułka "), wszystko$Nazwa, fixed = TRUE)
+bulki <- grepl(toupper("Bułki "), wszystko$Nazwa, fixed = TRUE)
+chleb <- grepl(toupper("Chleb "), wszystko$Nazwa, fixed = TRUE)
+
+tarta <- grepl(toupper(" tarta "), wszystko$Nazwa, fixed = TRUE)
+bochenek <- grepl(toupper("Bochenek "), wszystko$Nazwa, fixed = TRUE)
+
+
+length(which(bulka == 1))
+length(which(chleb == 1))
+length(which(tarta == 1))
+length(which(bulka == 1 & tarta == 0))
+length(which(bochenek == 1))
+
+idx_bulka <- which((bulka == 1 | bulki == 1) & tarta == 0)
+idx_chleb <- which(chleb == 1)
+idx_bochenek <- which(bochenek == 1)
+
+wszystko$Nazwa[idx_bulka]
+wszystko$Nazwa[idx_chleb]
+
+wszystko$Nazwa[which(tarta == 1)]
+
+wszystko$Nazwa[which(bochenek)]
+
+
+
+
+idx_pieczywo <- which(((bulka == 1 | bulki == 1) & tarta == 0) | chleb == 1 | bochenek == 1) 
+
+wszystko$Nazwa[idx_pieczywo]
+
+
+
+
+srednie[5] <- mean(wszystko$Cena[idx_pieczywo])
+# 6.17
+
+wariancje[5] <- var(wszystko$Cena[idx_pieczywo])
+# 1.596828
+
+
+
+
+# 6. Pozostale wyroby piekarskie
+
+ciasto <- grepl(toupper("Ciasto "), wszystko$Nazwa, fixed = TRUE)
+paczek <- grepl(toupper("Pączek "), wszystko$Nazwa, fixed = TRUE)
+paczki <- grepl(toupper("Pączki "), wszystko$Nazwa, fixed = TRUE)
+drozdzowka <- grepl(toupper("Drożdżówka"), wszystko$Nazwa, fixed = TRUE)
+
+length(which(ciasto == 1))
+length(which(paczek == 1))
+length(which(paczki == 1))
+length(which(drozdzowka == 1))
+
+idx_ciasto <- which(ciasto == 1)
+idx_paczek <- which(paczek == 1)
+idx_paczki <- which(paczki == 1)
+idx_drozdzowka <- which(drozdzowka == 1)
+
+wszystko$Nazwa[idx_ciasto]
+wszystko$Nazwa[idx_paczek]
+wszystko$Nazwa[idx_paczki]
+wszystko$Nazwa[idx_drozdzowka]
+
+
+
+
+idx_pozostale_wyroby_piekarskie <- which(ciasto == 1 | paczek == 1 | paczki == 1 | drozdzowka == 1)
+
+wszystko$Nazwa[idx_pozostale_wyroby_piekarskie]
+
+
+
+
+
+srednie[6] <- mean(wszystko$Cena[idx_pozostale_wyroby_piekarskie])
+# 7.131429
+
+wariancje[6] <- var(wszystko$Cena[idx_pozostale_wyroby_piekarskie])
+# 8.088382
+
+
+
+
+
+
+
+# 7. Pizza i inne polprodukty maczne
+
+pizza <- grepl(toupper("Spód do pizzy "), wszystko$Nazwa, fixed = TRUE)
+placek <- grepl(toupper("Placek "), wszystko$Nazwa, fixed = TRUE)
+tortilla_pszenna <- grepl(toupper("Tortilla pszenna "), wszystko$Nazwa, fixed = TRUE)
+tortilla_z_ziarnami <- grepl(toupper("Tortilla z ziarnami "), wszystko$Nazwa, fixed = TRUE)
+tortilla_wrap <- grepl(toupper("Tortilla wrap "), wszystko$Nazwa, fixed = TRUE)
+pierogi <- grepl(toupper("Pierogi "), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_pizza <- which(pizza == 1)
+idx_placek <- which(placek == 1)
+idx_tortilla_pszenna <- which(tortilla_pszenna == 1)
+idx_tortilla_z_ziarnami <- which(tortilla_z_ziarnami == 1)
+idx_tortilla_wrap <- which(tortilla_wrap == 1)
+idx_pierogi <- which(pierogi == 1)
+
+wszystko$Nazwa[idx_pizza]
+wszystko$Nazwa[idx_placek]
+wszystko$Nazwa[idx_tortilla_pszenna]
+wszystko$Nazwa[idx_tortilla_z_ziarnami]
+wszystko$Nazwa[idx_tortilla_wrap]
+wszystko$Nazwa[idx_pierogi]
+
+
+
+
+idx_pizza_i_inne_polprodukty_maczne <- which(pizza == 1 | placek == 1 | tortilla_pszenna == 1 | tortilla_z_ziarnami == 1 |
+                                               tortilla_wrap == 1 | pierogi == 1)
+
+wszystko$Nazwa[idx_pizza_i_inne_polprodukty_maczne]
+
+
+
+
+
+srednie[7] <- mean(wszystko$Cena[idx_pizza_i_inne_polprodukty_maczne])
+# 7.247143
+
+wariancje[7] <- var(wszystko$Cena[idx_pizza_i_inne_polprodukty_maczne])
+# 4.552857
+
+
+
+
+
+
+
+
+# 8. Makarony i inne produkty makaronowe
+
+makaron <- grepl(toupper("Makaron "), wszystko$Nazwa, fixed = TRUE)
+kluski <- grepl(toupper("Kluski "), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_makaron <- which(makaron == 1)
+idx_kluski <- which(kluski == 1)
+
+
+wszystko$Nazwa[idx_makaron]
+wszystko$Nazwa[idx_kluski]
+
+
+
+
+
+idx_makaron_i_inne_produkty_makaronowe <- which(makaron == 1 | kluski == 1)
+
+wszystko$Nazwa[idx_makaron_i_inne_produkty_makaronowe]
+
+
+
+
+
+srednie[8] <- mean(wszystko$Cena[idx_makaron_i_inne_produkty_makaronowe])
+# 6.264078
+
+wariancje[8] <- var(wszystko$Cena[idx_makaron_i_inne_produkty_makaronowe])
+# 6.370884
+
+
+
+
+
+
+
+# 9. Platki sniadaniowe
+
+platki <- grepl(toupper("Płatki "), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_platki <- which(platki == 1)
+
+
+wszystko$Nazwa[idx_platki]
+
+
+
+
+idx_platki_sniadaniowe <- which(platki == 1)
+
+wszystko$Nazwa[idx_platki_sniadaniowe]
+
+
+
+
+
+srednie[9] <- mean(wszystko$Cena[idx_platki_sniadaniowe])
+# 7.339254
+
+wariancje[9] <- var(wszystko$Cena[idx_platki_sniadaniowe])
+# 7.871607
+
+
+
+
+
+
+
+# 10. Pozostale produkty zbozowe
+
+musli <- grepl(toupper("Musli "), wszystko$Nazwa, fixed = TRUE)
+granola <- grepl(toupper("Granola "), wszystko$Nazwa, fixed = TRUE)
+
+idx_musli <- which(musli == 1)
+idx_granola <- which(granola == 1)
+
+
+wszystko$Nazwa[idx_musli]
+wszystko$Nazwa[idx_granola]
+
+
+
+
+idx_pozostale_produkty_zbozowe <- which(musli == 1 | granola == 1)
+
+wszystko$Nazwa[idx_pozostale_produkty_zbozowe]
+
+
+
+
+
+srednie[10] <- mean(wszystko$Cena[idx_pozostale_produkty_zbozowe])
+# 6.827391
+
+wariancje[10] <- var(wszystko$Cena[idx_pozostale_produkty_zbozowe])
+# 16.89052
+
+
+
+
+
+# 11. Mieso wolowe
+
+wolowina <- grepl(toupper("Wołowina"), wszystko$Nazwa, fixed = TRUE)
+stek_wolowy <- grepl(toupper("Stek wołowy"), wszystko$Nazwa, fixed = TRUE)
+poledwica_wolowa <- grepl(toupper("Polędwica wołowa"), wszystko$Nazwa, fixed = TRUE)
+lopatka_wolowa <- grepl(toupper("Łopatka wołowa"), wszystko$Nazwa, fixed = TRUE)
+
+idx_wolowina <- which(wolowina == 1)
+idx_stek_wolowy <- which(stek_wolowy == 1)
+idx_poledwica_wolowa <- which(poledwica_wolowa == 1)
+idx_lopatka_wolowa <- which(lopatka_wolowa == 1)
+
+wszystko$Nazwa[idx_wolowina]
+wszystko$Nazwa[idx_stek_wolowy]
+wszystko$Nazwa[idx_poledwica_wolowa]
+wszystko$Nazwa[idx_lopatka_wolowa]
+
+
+idx_mieso_wolowe <- which(wolowina == 1 | stek_wolowy == 1 | poledwica_wolowa == 1 | lopatka_wolowa == 1)
+
+wszystko$Nazwa[idx_mieso_wolowe]
+
+
+
+
+
+srednie[11] <- mean(wszystko$Cena[idx_mieso_wolowe])
+# NaN
+
+wariancje[11] <- var(wszystko$Cena[idx_mieso_wolowe])
+# NA 
+
+
+
+
+
+# 12. Mieso cielece
+
+cielecina <- grepl(toupper("Cielęcina"), wszystko$Nazwa, fixed = TRUE)
+udziec_przedni <- grepl(toupper("Udziec przedni"), wszystko$Nazwa, fixed = TRUE)
+poledwica_cieleca <- grepl(toupper("Polędwica cielęca"), wszystko$Nazwa, fixed = TRUE)
+
+idx_cielecina <- which(cielecina == 1)
+idx_udziec_przedni <- which(udziec_przedni == 1)
+idx_poledwica_cieleca <- which(poledwica_cieleca == 1)
+
+wszystko$Nazwa[idx_cielecina]
+wszystko$Nazwa[idx_udziec_przedni]
+wszystko$Nazwa[idx_poledwica_cieleca]
+
+
+
+idx_mieso_cielece <- which(cielecina == 1 | udziec_przedni == 1 | poledwica_cieleca == 1)
+
+wszystko$Nazwa[idx_mieso_cielece]
+
+
+
+
+
+srednie[12] <- mean(wszystko$Cena[idx_mieso_cielece])
+# NaN
+
+wariancje[12] <- var(wszystko$Cena[idx_mieso_cielece])
+# NA 
+
+
+
+
+
+
+# 13. Mieso wieprzowe
+
+wieprzowina <- grepl(toupper("Wieprzowina"), wszystko$Nazwa, fixed = TRUE)
+poledwica_wieprzowa <- grepl(toupper("Polędwica wieprzowa"), wszystko$Nazwa, fixed = TRUE)
+lopatka_wieprzowa <- grepl(toupper("Łopatka wieprzowa"), wszystko$Nazwa, fixed = TRUE)
+stek_wieprzowy <- grepl(toupper("Stek wieprzowy"), wszystko$Nazwa, fixed = TRUE)
+schab_wieprzowy <- grepl(toupper("Schab wieprzowy"), wszystko$Nazwa, fixed = TRUE)
+
+idx_wieprzowina <- which(wieprzowina == 1)
+idx_poledwica_wieprzowa <- which(poledwica_wieprzowa == 1)
+idx_lopatka_wieprzowa <- which(lopatka_wieprzowa == 1)
+idx_stek_wieprzowy <- which(stek_wieprzowy == 1)
+idx_schab_wieprzowy <- which(schab_wieprzowy == 1)
+
+wszystko$Nazwa[idx_wieprzowina]
+wszystko$Nazwa[idx_poledwica_wieprzowa]
+wszystko$Nazwa[idx_lopatka_wieprzowa]
+wszystko$Nazwa[idx_stek_wieprzowy]
+wszystko$Nazwa[idx_schab_wieprzowy]
+
+
+
+
+idx_mieso_wieprzowe <- which(wieprzowina == 1 | poledwica_wieprzowa == 1 | lopatka_wieprzowa == 1 | stek_wieprzowy == 1 | 
+                               schab_wieprzowy == 1)
+
+wszystko$Nazwa[idx_mieso_wieprzowe]
+
+
+
+
+
+srednie[13] <- mean(wszystko$Cena[idx_mieso_wieprzowe])
+# NaN
+
+wariancje[13] <- var(wszystko$Cena[idx_mieso_wieprzowe])
+# NA 
+
+
+
+
+
+
+
+# 14. Mieso baranie i kozie
+
+mieso_baranie <- grepl(toupper("Baranina"), wszystko$Nazwa, fixed = TRUE)
+mieso_kozie <- grepl(toupper("Kozina"), wszystko$Nazwa, fixed = TRUE)
+
+idx_mieso_baranie <- which(mieso_baranie == 1)
+idx_mieso_kozie <- which(mieso_kozie == 1)
+
+wszystko$Nazwa[idx_mieso_baranie]
+wszystko$Nazwa[idx_mieso_kozie]
+
+
+
+
+idx_mieso_baranie_i_kozie <- which(mieso_baranie == 1 | mieso_kozie == 1) 
+
+wszystko$Nazwa[idx_mieso_baranie_i_kozie]
+
+
+
+
+
+srednie[14] <- mean(wszystko$Cena[idx_mieso_baranie_i_kozie])
+# NaN
+
+wariancje[14] <- var(wszystko$Cena[idx_mieso_baranie_i_kozie])
+# NA 
+
+
+
+
+
+
+# 15. Kury, koguty, kurczeta
+
+kury <- grepl(toupper("KURCZAK "), wszystko$Nazwa, fixed = TRUE)
+kura <- grepl(toupper("KURA "), wszystko$Nazwa, fixed = TRUE)
+kogut <- grepl(toupper("KOGUT "), wszystko$Nazwa, fixed = TRUE)
+kurczatko <- grepl(toupper("KURCZĄTKO "), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_kury <- which(kury == 1)
+
+wszystko$Nazwa[idx_kury]
+
+
+
+idx_kury_koguty_kurczeta <- which(kury == 1 | kura == 1 | kogut == 1 | kurczatko == 1)
+
+wszystko$Nazwa[idx_kury_koguty_kurczeta]
+
+
+
+
+
+srednie[15] <- mean(wszystko$Cena[idx_kury_koguty_kurczeta])
+# 2.688571
+
+wariancje[15] <- var(wszystko$Cena[idx_kury_koguty_kurczeta])
+# 0.2020143 
+
+
+
+
+
+
+# 16. Pozostaly drob
+
+
+
+ges <- grepl(toupper("Gęś "), wszystko$Nazwa, fixed = TRUE)
+indyk <- grepl(toupper("Indyk "), wszystko$Nazwa, fixed = TRUE)
+kaczka <- grepl(toupper("Kaczka "), wszystko$Nazwa, fixed = TRUE)
+
+idx_ges <- which(ges == 1)
+idx_indyk <- which(indyk == 1)
+idx_kaczka <- which(kaczka == 1)
+
+wszystko$Nazwa[idx_ges]
+wszystko$Nazwa[idx_indyk]
+wszystko$Nazwa[idx_kaczka]
+
+
+
+
+idx_pozostaly_drob <- which(ges == 1 | indyk == 1 | kaczka == 1) 
+
+wszystko$Nazwa[idx_pozostaly_drob]
+
+
+
+
+
+srednie[16] <- mean(wszystko$Cena[idx_pozostaly_drob])
+# NaN
+
+wariancje[16] <- var(wszystko$Cena[idx_pozostaly_drob])
+# NA 
+
+
+
+# 17. Pozostale miesa
+
+
+
+jagniecina <- grepl(toupper("Jagnięcina"), wszystko$Nazwa, fixed = TRUE)
+
+idx_jagniecina <- which(jagniecina == 1)
+
+wszystko$Nazwa[idx_jagniecina]
+
+
+
+
+idx_pozostale_miesa <- which(jagniecina == 1) 
+
+wszystko$Nazwa[idx_pozostale_miesa]
+
+
+
+
+
+srednie[17] <- mean(wszystko$Cena[idx_pozostale_miesa])
+# NaN
+
+wariancje[17] <- var(wszystko$Cena[idx_pozostale_miesa])
+# NA 
+
+
+
+
+
+
+# 18. Podroby i przetwory podrobowe
+
+watrabianka <- grepl(toupper("Wątrobianka"), wszystko$Nazwa, fixed = TRUE)
+pasztet <- grepl(toupper("Pasztet"), wszystko$Nazwa, fixed = TRUE)
+kiszka <- grepl(toupper("Kiszka"), wszystko$Nazwa, fixed = TRUE)
+salceson <- grepl(toupper("Salceson"), wszystko$Nazwa, fixed = TRUE)
+
+idx_watrabianka <- which(watrabianka == 1)
+idx_pasztet <- which(pasztet == 1)
+idx_kiszka <- which(kiszka == 1)
+idx_salceson <- which(salceson == 1)
+
+wszystko$Nazwa[idx_watrabianka]
+wszystko$Nazwa[idx_pasztet]
+wszystko$Nazwa[idx_kiszka]
+wszystko$Nazwa[idx_salceson]
+
+
+
+
+idx_podroby_i_przetwory_podrobowe <- which(watrabianka == 1 | pasztet == 1 | kiszka == 1 | salceson == 1) 
+
+wszystko$Nazwa[idx_podroby_i_przetwory_podrobowe]
+
+
+
+
+
+srednie[18] <- mean(wszystko$Cena[idx_podroby_i_przetwory_podrobowe])
+# 3.50381
+
+wariancje[18] <- var(wszystko$Cena[idx_podroby_i_przetwory_podrobowe])
+# 8.493044
+
+
+
+
+
+# 19. Wedliny z wyjatkiem drobiowych
+
+wedlina <- grepl(toupper("Wędlina"), wszystko$Nazwa, fixed = TRUE)
+drobiowa <- grepl(toupper("drobiowa"), wszystko$Nazwa, fixed = TRUE)
+poledwica <- grepl(toupper("Polędwica"), wszystko$Nazwa, fixed = TRUE)
+z_kurczaka <- grepl(toupper("z kurczaka"), wszystko$Nazwa, fixed = TRUE)
+z_kurczat <- grepl(toupper("z kurcząt"), wszystko$Nazwa, fixed = TRUE)
+z_indyka <- grepl(toupper("z indyka"), wszystko$Nazwa, fixed = TRUE)
+szynka <- grepl(toupper(" Szynka"), wszystko$Nazwa, fixed = TRUE)
+sopocka <- grepl(toupper("sopocka"), wszystko$Nazwa, fixed = TRUE)
+
+idx_wedlina <- which(wedlina == 1)
+idx_wedlina_nie_drobiowa <- which(wedlina == 1 & drobiowa == 0 & z_kurczaka == 0 & z_kurczat == 0 & z_indyka == 0 & sopocka == 0)
+idx_poledwica_nie_drobiowa <- which(poledwica == 1 & drobiowa == 0 & z_kurczaka == 0 & z_kurczat == 0 & z_indyka == 0 & sopocka == 0)
+idx_szynka_nie_drobiowa <- which(szynka == 1 & drobiowa == 0 & z_kurczaka == 0 & z_kurczat == 0 & z_indyka == 0 & sopocka == 0)
+
+wszystko$Nazwa[idx_wedlina_nie_drobiowa]
+wszystko$Nazwa[idx_poledwica_nie_drobiowa]
+wszystko$Nazwa[idx_szynka_nie_drobiowa]
+
+
+
+
+idx_wedliny_z_wyjatkiem_drobiowych <- which(
+  (
+    wedlina == 1 & drobiowa == 0 & z_kurczaka == 0 & z_kurczat == 0 & z_indyka == 0 & sopocka == 0
+  )
+  |
+    (
+      poledwica == 1 & drobiowa == 0 & z_kurczaka == 0 & z_kurczat == 0 & z_indyka == 0 & sopocka == 0
+    )
+  |
+    (
+      szynka == 1 & drobiowa == 0 & z_kurczaka == 0 & z_kurczat == 0 & z_indyka == 0 & sopocka == 0
+    )
+)
+
+wszystko$Nazwa[idx_wedliny_z_wyjatkiem_drobiowych]
+
+
+
+
+
+srednie[19] <- mean(wszystko$Cena[idx_wedliny_z_wyjatkiem_drobiowych])
+
+
+wariancje[19] <- var(wszystko$Cena[idx_wedliny_z_wyjatkiem_drobiowych])
+
+
+
+
+
+
+# 20. Wedliny drobiowe
+
+wedlina <- grepl(toupper("Wędlina"), wszystko$Nazwa, fixed = TRUE)
+drobiowa <- grepl(toupper("drobiowa"), wszystko$Nazwa, fixed = TRUE)
+poledwica <- grepl(toupper("Polędwica"), wszystko$Nazwa, fixed = TRUE)
+z_kurczaka <- grepl(toupper("z kurczaka"), wszystko$Nazwa, fixed = TRUE)
+z_kurczat <- grepl(toupper("z kurcząt"), wszystko$Nazwa, fixed = TRUE)
+z_indyka <- grepl(toupper("z indyka"), wszystko$Nazwa, fixed = TRUE)
+szynka <- grepl(toupper(" Szynka"), wszystko$Nazwa, fixed = TRUE)
+sopocka <- grepl(toupper("sopocka"), wszystko$Nazwa, fixed = TRUE)
+
+idx_wedlina <- which(wedlina == 1)
+idx_wedlina_drobiowa <- which(wedlina == 1 & (drobiowa == 1 | z_kurczaka == 1 | z_kurczat == 1 | z_indyka == 1 | sopocka == 1))
+idx_poledwica_drobiowa <- which(poledwica == 1 & (drobiowa == 1 | z_kurczaka == 1 | z_kurczat == 1 | z_indyka == 1 | sopocka == 1))
+idx_szynka_drobiowa <- which(szynka == 1 & (drobiowa == 1 | z_kurczaka == 1 | z_kurczat == 1 | z_indyka == 1 | sopocka == 1))
+
+wszystko$Nazwa[idx_wedlina_drobiowa]
+wszystko$Nazwa[idx_poledwica_drobiowa]
+wszystko$Nazwa[idx_szynka_drobiowa]
+
+
+
+
+idx_wedliny_drobiowe <- which(
+  (
+    wedlina == 1 & (drobiowa == 1 | z_kurczaka == 1 | z_kurczat == 1 | z_indyka == 1 | sopocka == 1)
+  )
+  |
+    (
+      poledwica == 1 & (drobiowa == 1 | z_kurczaka == 1 | z_kurczat == 1 | z_indyka == 1 | sopocka == 1)
+    )
+  |
+    (
+      szynka == 1 & (drobiowa == 1 | z_kurczaka == 1 | z_kurczat == 1 | z_indyka == 1 | sopocka == 1)
+    )
+)
+
+wszystko$Nazwa[idx_wedliny_drobiowe]
+
+
+
+
+
+srednie[20] <- mean(wszystko$Cena[idx_wedliny_drobiowe])
+
+
+wariancje[20] <- var(wszystko$Cena[idx_wedliny_drobiowe])
+
+
+
+
+
+
+
+
+# 21. Mieso mielone mieszane
+
+mieso_mielone <- grepl(toupper("Mięso mielone"), wszystko$Nazwa, fixed = TRUE)
+wolowe <- grepl(toupper("wołowe"), wszystko$Nazwa, fixed = TRUE)
+wieprzowe <- grepl(toupper("wieprzowe"), wszystko$Nazwa, fixed = TRUE)
+wieprzowo <- grepl(toupper("wieprzowo"), wszystko$Nazwa, fixed = TRUE)
+z_kurczaka <- grepl(toupper("z kurczaka"), wszystko$Nazwa, fixed = TRUE)
+
+idx_mieso_mielone <- which(mieso_mielone == 1)
+idx_mieso_mielone_mieszane <- which(
+  mieso_mielone == 1
+  &
+    (
+      (wolowe == 1 & wieprzowe == 1)
+      |
+        (wolowe == 1 & z_kurczaka == 1)
+      |
+        (wieprzowe == 1 & z_kurczaka == 1)
+      |
+        (wieprzowo == 1 & wolowe == 1)
+    )
+  
+)
+
+wszystko$Nazwa[idx_mieso_mielone]
+wszystko$Nazwa[idx_mieso_mielone_mieszane]
+
+
+
+wszystko$Nazwa[idx_mieso_mielone_mieszane]
+
+
+
+
+
+srednie[21] <- mean(wszystko$Cena[idx_mieso_mielone_mieszane])
+
+wariancje[21] <- var(wszystko$Cena[idx_mieso_mielone_mieszane])
+
+
+
+
+
+
+
+
+# 22. Inne przetwory miesne
+
+boczek <- grepl(toupper("Boczek "), wszystko$Nazwa, fixed = TRUE)
+konserwa <- grepl(toupper("Konserwa"), wszystko$Nazwa, fixed = TRUE)
+
+idx_boczek <- which(boczek == 1)
+idx_konserwa <- which(konserwa == 1)
+
+wszystko$Nazwa[idx_boczek]
+wszystko$Nazwa[idx_konserwa]
+
+idx_inne_przetwory_miesne <- which(boczek == 1 | konserwa == 1)
+
+wszystko$Nazwa[idx_inne_przetwory_miesne]
+
+
+
+
+
+srednie[22] <- mean(wszystko$Cena[idx_inne_przetwory_miesne])
+
+wariancje[22] <- var(wszystko$Cena[idx_inne_przetwory_miesne])
+
+
+
+
+
+
+
+
+# 23. Ryby swieze lub chlodzone
+
+ryba <- grepl(toupper("Ryba "), wszystko$Nazwa, fixed = TRUE)
+ryby <- grepl(toupper("Ryby "), wszystko$Nazwa, fixed = TRUE)
+mrozona <- grepl(toupper("mrożona"), wszystko$Nazwa, fixed = TRUE)
+mrozone <- grepl(toupper("mrożone"), wszystko$Nazwa, fixed = TRUE)
+po_grecku <- grepl(toupper("po grecku"), wszystko$Nazwa, fixed = TRUE)
+
+idx_ryba <- which(ryba == 1)
+idx_ryby <- which(ryby == 1)
+
+wszystko$Nazwa[idx_ryba]
+wszystko$Nazwa[idx_ryby]
+
+idx_ryby_swieze_lub_chlodzone <- which((ryba == 1 & mrozona == 0 & po_grecku == 0) | (ryby == 1 & mrozone == 0 & po_grecku == 0))
+
+wszystko$Nazwa[idx_ryby_swieze_lub_chlodzone]
+
+
+
+
+
+srednie[23] <- mean(wszystko$Cena[idx_ryby_swieze_lub_chlodzone])
+
+
+wariancje[23] <- var(wszystko$Cena[idx_ryby_swieze_lub_chlodzone])
+
+
+
+
+
+
+
+
+
+
+# 24. Ryby mrozone
+
+ryba <- grepl(toupper("Ryba "), wszystko$Nazwa, fixed = TRUE)
+ryby <- grepl(toupper("Ryby "), wszystko$Nazwa, fixed = TRUE)
+mrozona <- grepl(toupper("mrożona"), wszystko$Nazwa, fixed = TRUE)
+mrozone <- grepl(toupper("mrożone"), wszystko$Nazwa, fixed = TRUE)
+
+idx_ryby_mrozone <- which((ryba == 1 & mrozona == 1) | (ryby == 1 & mrozone == 1))
+
+wszystko$Nazwa[idx_ryby_mrozone]
+
+srednie[24] <- mean(wszystko$Cena[idx_ryby_mrozone])
+
+wariancje[24] <- var(wszystko$Cena[idx_ryby_mrozone])
+
+
+
+
+
+
+
+
+
+
+# 25. Owoce morza swieze lub chlodzone
+
+homar <- grepl(toupper("Homar "), wszystko$Nazwa, fixed = TRUE)
+homary <- grepl(toupper("Homary "), wszystko$Nazwa, fixed = TRUE)
+krewetka <- grepl(toupper("Krewetka "), wszystko$Nazwa, fixed = TRUE)
+krewetki <- grepl(toupper("Krewetki "), wszystko$Nazwa, fixed = TRUE)
+krab <- grepl(toupper("Krab "), wszystko$Nazwa, fixed = TRUE)
+kraby <- grepl(toupper("Kraby "), wszystko$Nazwa, fixed = TRUE)
+ostryga <- grepl(toupper("Ostryga "), wszystko$Nazwa, fixed = TRUE)
+ostrygi <- grepl(toupper("Ostrygi "), wszystko$Nazwa, fixed = TRUE)
+kalamarnica <- grepl(toupper("Kałamarnica "), wszystko$Nazwa, fixed = TRUE)
+kalamarnice <- grepl(toupper("Kałamarnice "), wszystko$Nazwa, fixed = TRUE)
+osmiornica <- grepl(toupper("Ośmiornica "), wszystko$Nazwa, fixed = TRUE)
+osmiornice <- grepl(toupper("Ośmiornice "), wszystko$Nazwa, fixed = TRUE)
+mrozona <- grepl(toupper("mrożona"), wszystko$Nazwa, fixed = TRUE)
+mrozony <- grepl(toupper("mrożony"), wszystko$Nazwa, fixed = TRUE)
+mrozone <- grepl(toupper("mrożone"), wszystko$Nazwa, fixed = TRUE)
+
+idx_owoce_morza_swieze_lub_chlodzone <- which((homar == 1 & mrozony == 0) | (homary == 1 & mrozone == 0)
+                                              |
+                                                (krewetka == 1 & mrozona == 0) | (krewetki == 1 & mrozone == 0)
+                                              |
+                                                (krab == 1 & mrozony == 0) | (kraby == 1 & mrozone == 0)
+                                              |
+                                                (ostryga == 1 & mrozona == 0) | (ostrygi == 1 & mrozone == 0)
+                                              |
+                                                (kalamarnica == 1 & mrozona == 0) | (kalamarnice == 1 & mrozone == 0)
+                                              |
+                                                (osmiornica == 1 & mrozona == 0) | (osmiornice == 1 & mrozone == 0))
+
+wszystko$Nazwa[idx_owoce_morza_swieze_lub_chlodzone]
+
+srednie[25] <- mean(wszystko$Cena[idx_owoce_morza_swieze_lub_chlodzone])
+
+wariancje[25] <- var(wszystko$Cena[idx_owoce_morza_swieze_lub_chlodzone])
+
+
+
+
+
+
+
+
+
+# 26. Owoce morza mrozone
+
+homar <- grepl(toupper("Homar "), wszystko$Nazwa, fixed = TRUE)
+homary <- grepl(toupper("Homary "), wszystko$Nazwa, fixed = TRUE)
+krewetka <- grepl(toupper("Krewetka "), wszystko$Nazwa, fixed = TRUE)
+krewetki <- grepl(toupper("Krewetki "), wszystko$Nazwa, fixed = TRUE)
+krab <- grepl(toupper("Krab "), wszystko$Nazwa, fixed = TRUE)
+kraby <- grepl(toupper("Kraby "), wszystko$Nazwa, fixed = TRUE)
+ostryga <- grepl(toupper("Ostryga "), wszystko$Nazwa, fixed = TRUE)
+ostrygi <- grepl(toupper("Ostrygi "), wszystko$Nazwa, fixed = TRUE)
+kalamarnica <- grepl(toupper("Kałamarnica "), wszystko$Nazwa, fixed = TRUE)
+kalamarnice <- grepl(toupper("Kałamarnice "), wszystko$Nazwa, fixed = TRUE)
+osmiornica <- grepl(toupper("Ośmiornica "), wszystko$Nazwa, fixed = TRUE)
+osmiornice <- grepl(toupper("Ośmiornice "), wszystko$Nazwa, fixed = TRUE)
+mrozona <- grepl(toupper("mrożona"), wszystko$Nazwa, fixed = TRUE)
+mrozony <- grepl(toupper("mrożony"), wszystko$Nazwa, fixed = TRUE)
+mrozone <- grepl(toupper("mrożone"), wszystko$Nazwa, fixed = TRUE)
+
+idx_owoce_morza_mrozone <- which((homar == 1 & mrozony == 1) | (homary == 1 & mrozone == 1)
+                                 |
+                                   (krewetka == 1 & mrozona == 1) | (krewetki == 1 & mrozone == 1)
+                                 |
+                                   (krab == 1 & mrozony == 1) | (kraby == 1 & mrozone == 1)
+                                 |
+                                   (ostryga == 1 & mrozona == 1) | (ostrygi == 1 & mrozone == 1)
+                                 |
+                                   (kalamarnica == 1 & mrozona == 1) | (kalamarnice == 1 & mrozone == 1)
+                                 |
+                                   (osmiornica == 1 & mrozona == 1) | (osmiornice == 1 & mrozone == 1))
+
+wszystko$Nazwa[idx_owoce_morza_mrozone]
+
+srednie[26] <- mean(wszystko$Cena[idx_owoce_morza_mrozone])
+
+wariancje[26] <- var(wszystko$Cena[idx_owoce_morza_mrozone])
+
+
+
+
+
+
+
+
+
+
+# 27. Ryby i owoce morza suszone, wedzone lub solone 
+
+homar <- grepl(toupper("Homar "), wszystko$Nazwa, fixed = TRUE)
+homary <- grepl(toupper("Homary "), wszystko$Nazwa, fixed = TRUE)
+krewetka <- grepl(toupper("Krewetka "), wszystko$Nazwa, fixed = TRUE)
+krewetki <- grepl(toupper("Krewetki "), wszystko$Nazwa, fixed = TRUE)
+krab <- grepl(toupper("Krab "), wszystko$Nazwa, fixed = TRUE)
+kraby <- grepl(toupper("Kraby "), wszystko$Nazwa, fixed = TRUE)
+ostryga <- grepl(toupper("Ostryga "), wszystko$Nazwa, fixed = TRUE)
+ostrygi <- grepl(toupper("Ostrygi "), wszystko$Nazwa, fixed = TRUE)
+kalamarnica <- grepl(toupper("Kałamarnica "), wszystko$Nazwa, fixed = TRUE)
+kalamarnice <- grepl(toupper("Kałamarnice "), wszystko$Nazwa, fixed = TRUE)
+osmiornica <- grepl(toupper("Ośmiornica "), wszystko$Nazwa, fixed = TRUE)
+osmiornice <- grepl(toupper("Ośmiornice "), wszystko$Nazwa, fixed = TRUE)
+suszona <- grepl(toupper("suszona"), wszystko$Nazwa, fixed = TRUE)
+suszony <- grepl(toupper("suszony"), wszystko$Nazwa, fixed = TRUE)
+suszone <- grepl(toupper("suszone"), wszystko$Nazwa, fixed = TRUE)
+wedzona <- grepl(toupper("wędzona"), wszystko$Nazwa, fixed = TRUE)
+wedzony <- grepl(toupper("wędzony"), wszystko$Nazwa, fixed = TRUE)
+wedzone <- grepl(toupper("wędzone"), wszystko$Nazwa, fixed = TRUE)
+solona <- grepl(toupper("solona"), wszystko$Nazwa, fixed = TRUE)
+solony <- grepl(toupper("solony"), wszystko$Nazwa, fixed = TRUE)
+solone <- grepl(toupper("solone"), wszystko$Nazwa, fixed = TRUE)
+
+idx_ryby_i_owoce_morza_suszone_wedzone_lub_solone <- which((homar == 1 & suszony == 1) | (homary == 1 & suszone == 1)
+                                                           |
+                                                             (homar == 1 & wedzony == 1) | (homary == 1 & wedzone == 1)
+                                                           |
+                                                             (homar == 1 & solony == 1) | (homary == 1 & solone == 1)
+                                                           |
+                                                             (krewetka == 1 & suszona == 1) | (krewetki == 1 & suszone == 1)
+                                                           |
+                                                             (krewetka == 1 & wedzona == 1) | (krewetki == 1 & wedzone == 1)
+                                                           |
+                                                             (krewetka == 1 & solona == 1) | (krewetki == 1 & solone == 1)
+                                                           |
+                                                             (krab == 1 & suszony == 1) | (kraby == 1 & suszone == 1)
+                                                           |
+                                                             (krab == 1 & wedzony == 1) | (kraby == 1 & wedzone == 1)
+                                                           |
+                                                             (krab == 1 & solony == 1) | (kraby == 1 & solone == 1)
+                                                           |
+                                                             (ostryga == 1 & suszona == 1) | (ostrygi == 1 & suszone == 1)
+                                                           |
+                                                             (ostryga == 1 & wedzona == 1) | (ostrygi == 1 & wedzone == 1)
+                                                           |
+                                                             (ostryga == 1 & solona == 1) | (ostrygi == 1 & solone == 1)
+                                                           |
+                                                             (kalamarnica == 1 & suszona == 1) | (kalamarnice == 1 & suszone == 1)
+                                                           |
+                                                             (kalamarnica == 1 & wedzona == 1) | (kalamarnice == 1 & wedzone == 1)
+                                                           |
+                                                             (kalamarnica == 1 & solona == 1) | (kalamarnice == 1 & solone == 1)
+                                                           |
+                                                             (osmiornica == 1 & suszona == 1) | (osmiornice == 1 & suszone == 1)
+                                                           |
+                                                             (osmiornica == 1 & wedzona == 1) | (osmiornice == 1 & wedzone == 1)
+                                                           |
+                                                             (osmiornica == 1 & solona == 1) | (osmiornice == 1 & solone == 1))
+
+wszystko$Nazwa[idx_ryby_i_owoce_morza_suszone_wedzone_lub_solone]
+
+srednie[27] <- mean(wszystko$Cena[idx_ryby_i_owoce_morza_suszone_wedzone_lub_solone])
+
+wariancje[27] <- var(wszystko$Cena[idx_ryby_i_owoce_morza_suszone_wedzone_lub_solone])
+
+
+
+
+
+
+
+
+
+
+
+
+# 28. Pozostale przetwory z ryb i owocow morza
+
+sardela <- grepl(toupper("Sardela "), wszystko$Nazwa, fixed = TRUE)
+sardele <- grepl(toupper("Sardele "), wszystko$Nazwa, fixed = TRUE)
+anchois <- grepl(toupper("Anchois "), wszystko$Nazwa, fixed = TRUE)
+kawior <- grepl(toupper("Kawior "), wszystko$Nazwa, fixed = TRUE)
+
+idx_pozostale_przetwory_z_ryb_i_owocow_morza <- which(sardela == 1 | sardele == 1 | anchois == 1 | kawior == 1)
+
+wszystko$Nazwa[idx_pozostale_przetwory_z_ryb_i_owocow_morza]
+
+srednie[28] <- mean(wszystko$Cena[idx_pozostale_przetwory_z_ryb_i_owocow_morza])
+
+wariancje[28] <- var(wszystko$Cena[idx_pozostale_przetwory_z_ryb_i_owocow_morza])
+
+
+
+
+
+
+
+
+
+
+# 29. Mleko pelne swieze
+
+mleko <- grepl(toupper("Mleko "), wszystko$Nazwa, fixed = TRUE)
+swieze <- grepl(toupper("świeże"), wszystko$Nazwa, fixed = TRUE)
+
+idx_mleko <- which(mleko == 1)
+
+wszystko$Nazwa[idx_mleko]
+
+idx_mleko_pelne_swieze <- which(mleko == 1 & swieze == 1)
+
+wszystko$Nazwa[idx_mleko_pelne_swieze]
+
+srednie[29] <- mean(wszystko$Cena[idx_mleko_pelne_swieze])
+
+wariancje[29] <- var(wszystko$Cena[idx_mleko_pelne_swieze])
+
+
+
+
+
+
+
+
+# 30. Mleko swieze niskotluszczowe
+
+mleko <- grepl(toupper("Mleko "), wszystko$Nazwa, fixed = TRUE)
+swieze <- grepl(toupper("świeże"), wszystko$Nazwa, fixed = TRUE)
+niskotluszczowe <- grepl(toupper("niskotłuszczowe"), wszystko$Nazwa, fixed = TRUE)
+
+idx_mleko <- which(mleko == 1)
+
+wszystko$Nazwa[idx_mleko]
+
+idx_mleko_swieze_niskotluszczowe <- which(mleko == 1 & swieze == 1 & niskotluszczowe == 1)
+
+wszystko$Nazwa[idx_mleko_swieze_niskotluszczowe]
+
+srednie[30] <- mean(wszystko$Cena[idx_mleko_swieze_niskotluszczowe])
+
+wariancje[30] <- var(wszystko$Cena[idx_mleko_swieze_niskotluszczowe])
+
+
+
+
+
+
+
+
+
+
+# 31. Mleko zageszczone i w proszku
+
+mleko <- grepl(toupper("Mleko "), wszystko$Nazwa, fixed = TRUE)
+zageszczone <- grepl(toupper("zagęszczone"), wszystko$Nazwa, fixed = TRUE)
+w_proszku <- grepl(toupper("w proszku"), wszystko$Nazwa, fixed = TRUE)
+
+idx_mleko_zageszczone_i_w_proszku <- which(mleko == 1 & (zageszczone == 1 | w_proszku == 1))
+
+wszystko$Nazwa[idx_mleko_zageszczone_i_w_proszku]
+
+srednie[31] <- mean(wszystko$Cena[idx_mleko_zageszczone_i_w_proszku])
+
+wariancje[31] <- var(wszystko$Cena[idx_mleko_zageszczone_i_w_proszku])
+
+
+
+
+
+
+
+
+
+# 32. Jogurt
+
+jogurt <- grepl(toupper("Jogurt "), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_jogurt <- which(jogurt == 1)
+
+wszystko$Nazwa[idx_jogurt]
+
+
+
+
+
+
+
+srednie[32] <- mean(wszystko$Cena[idx_jogurt])
+# 3.31
+
+wariancje[32] <- var(wszystko$Cena[idx_jogurt])
+# 1.0192
+
+
+
+
+# 33. Sery dojrzewajace i topione
+
+ser_dojrzewajacy <- grepl(toupper("Ser dojrzewający "), wszystko$Nazwa, fixed = TRUE)
+ser_edam <- grepl(toupper("Ser Edam "), wszystko$Nazwa, fixed = TRUE)
+ser_topiony <- grepl(toupper("Ser topiony "), wszystko$Nazwa, fixed = TRUE)
+serek_topiony <- grepl(toupper("Serek topiony "), wszystko$Nazwa, fixed = TRUE)
+
+idx_ser_dojrzewajacy <- which(ser_dojrzewajacy == 1)
+idx_ser_edam <- which(ser_edam == 1)
+idx_ser_topiony <- which(ser_topiony == 1)
+idx_serek_topiony <- which(serek_topiony == 1)
+
+wszystko$Nazwa[idx_ser_dojrzewajacy]
+wszystko$Nazwa[idx_ser_edam]
+wszystko$Nazwa[idx_ser_topiony]
+wszystko$Nazwa[idx_serek_topiony]
+
+
+idx_sery_dojrzewajace_i_topione <- which(ser_dojrzewajacy == 1 | ser_edam == 1 | ser_topiony == 1 | serek_topiony)
+
+wszystko$Nazwa[idx_sery_dojrzewajace_i_topione]
+
+srednie[33] <- mean(wszystko$Cena[idx_sery_dojrzewajace_i_topione])
+
+wariancje[33] <- var(wszystko$Cena[idx_sery_dojrzewajace_i_topione])
+
+
+
+
+
+
+
+# 34. Twarogi
+
+twarog <- grepl(toupper("Twaróg "), wszystko$Nazwa, fixed = TRUE)
+twarogi <- grepl(toupper("Twarogi "), wszystko$Nazwa, fixed = TRUE)
+twarozek <- grepl(toupper("Twarożek "), wszystko$Nazwa, fixed = TRUE)
+twarozki <- grepl(toupper("Twarożki "), wszystko$Nazwa, fixed = TRUE)
+ser_twarogowy <- grepl(toupper("Ser twarogowy "), wszystko$Nazwa, fixed = TRUE)
+
+idx_twarog <- which(twarog == 1)
+idx_twarogi <- which(twarogi == 1)
+idx_twarozek <- which(twarozek == 1)
+idx_twarozki <- which(twarozki == 1)
+idx_ser_twarogowy <- which(ser_twarogowy == 1)
+
+wszystko$Nazwa[idx_twarog]
+wszystko$Nazwa[idx_twarogi]
+wszystko$Nazwa[idx_twarozek]
+wszystko$Nazwa[idx_twarozki]
+wszystko$Nazwa[idx_ser_twarogowy]
+
+idx_twarogi <- which(twarog == 1 | twarogi == 1 | twarozek == 1 | twarozki == 1 | ser_twarogowy == 1)
+
+wszystko$Nazwa[idx_twarogi]
+
+srednie[34] <- mean(wszystko$Cena[idx_twarogi])
+# NaN
+
+wariancje[34] <- var(wszystko$Cena[idx_twarogi])
+# NA
+
+
+
+
+
+
+
+
+# 35. Smietana
+
+
+smietanka <- grepl(toupper("Śmietanka"), wszystko$Nazwa, fixed = TRUE)
+smietana <- grepl(toupper("Śmietana"), wszystko$Nazwa, fixed = TRUE)
+
+idx_smietanka <- which(smietanka == 1)
+idx_smietana <- which(smietana == 1)
+
+wszystko$Nazwa[idx_smietanka]
+wszystko$Nazwa[idx_smietana]
+
+
+idx_wszystkie_smietany <- which(smietanka == 1 | smietana == 1)
+
+wszystko$Nazwa[idx_wszystkie_smietany]
+
+
+
+
+srednie[35] <- mean(wszystko$Cena[idx_wszystkie_smietany])
+# 6.665
+
+wariancje[35] <- var(wszystko$Cena[idx_wszystkie_smietany])
+# 7.714
+
+
+
+
+
+
+
+
+# 36. Napoje i inne produkty mleczne
+
+jogurt <- grepl(toupper("Jogurt "), wszystko$Nazwa, fixed = TRUE)
+kefir <- grepl(toupper("Kefir "), wszystko$Nazwa, fixed = TRUE)
+maslanka <- grepl(toupper("Maślanka "), wszystko$Nazwa, fixed = TRUE)
+
+idx_jogurt <- which(jogurt == 1)
+idx_kefir <- which(kefir == 1)
+idx_maslanka <- which(maslanka == 1)
+
+wszystko$Nazwa[idx_jogurt]
+wszystko$Nazwa[idx_kefir]
+wszystko$Nazwa[idx_maslanka]
+
+idx_napoje_i_inne_produkty_mleczne <- which(jogurt == 1 | kefir == 1 | maslanka == 1)
+
+wszystko$Nazwa[idx_napoje_i_inne_produkty_mleczne]
+
+
+
+
+srednie[36] <- mean(wszystko$Cena[idx_napoje_i_inne_produkty_mleczne])
+# 6.665
+
+wariancje[36] <- var(wszystko$Cena[idx_napoje_i_inne_produkty_mleczne])
+# 7.714
+
+
+
+
+
+
+
+
+
+
+
+# 37. Jaja
+
+jaja <- grepl(toupper("Jaja "), wszystko$Nazwa, fixed = TRUE)
+jajo <- grepl(toupper("Jajo "), wszystko$Nazwa, fixed = TRUE)
+
+idx_jaja <- which(jaja == 1)
+idx_jajo <- which(jajo == 1)
+
+wszystko$Nazwa[idx_jaja]
+wszystko$Nazwa[idx_jajo]
+
+idx_wszystkie_jaja <- which(jaja == 1 | jajo == 1)
+
+wszystko$Nazwa[idx_wszystkie_jaja]
+
+srednie[37] <- mean(wszystko$Cena[idx_wszystkie_jaja])
+
+wariancje[37] <- var(wszystko$Cena[idx_wszystkie_jaja])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 38. Maslo
+
+
+
+maslo <- grepl(toupper("Masło "), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_maslo <- which(maslo == 1)
+
+wszystko$Nazwa[idx_maslo]
+
+
+
+
+
+
+
+srednie[38] <- mean(wszystko$Cena[idx_maslo])
+# 12.04
+
+wariancje[38] <- var(wszystko$Cena[idx_maslo])
+# 23.805
+
+
+
+
+
+
+
+
+
+
+# 39. Margaryna i inne tluszcze roslinne
+
+margaryna <- grepl(toupper("Margaryna "), wszystko$Nazwa, fixed = TRUE)
+
+idx_margaryna <- which(margaryna == 1)
+
+wszystko$Nazwa[idx_margaryna]
+
+
+
+
+
+
+
+srednie[39] <- mean(wszystko$Cena[idx_margaryna])
+# 12.04
+
+wariancje[39] <- var(wszystko$Cena[idx_margaryna])
+# 23.805
+
+
+
+
+
+
+
+
+
+# 40. Oliwa z oliwek
+
+oliwa_z_oliwek <- grepl(toupper("Oliwa z oliwek"), wszystko$Nazwa, fixed = TRUE)
+
+idx_oliwa_z_oliwek <- which(oliwa_z_oliwek == 1)
+
+wszystko$Nazwa[idx_oliwa_z_oliwek]
+
+srednie[40] <- mean(wszystko$Cena[idx_oliwa_z_oliwek])
+# 20.99833
+
+wariancje[40] <- var(wszystko$Cena[idx_oliwa_z_oliwek])
+# 37.66083
+
+
+
+
+
+
+
+
+
+# 41. Pozostale oleje jadalne
+
+olej_rzepakowy <- grepl(toupper("Olej rzepakowy"), wszystko$Nazwa, fixed = TRUE)
+olej_slonecznikowy <- grepl(toupper("Olej słonecznikowy"), wszystko$Nazwa, fixed = TRUE)
+olej_lniany <- grepl(toupper("Olej lniany"), wszystko$Nazwa, fixed = TRUE)
+olej_kokosowy <- grepl(toupper("Olej kokosowy"), wszystko$Nazwa, fixed = TRUE)
+olej_z_pestek_winogron <- grepl(toupper("Olej z pestek winogron"), wszystko$Nazwa, fixed = TRUE)
+olej_z_lnu <- grepl(toupper("Olej z lnu"), wszystko$Nazwa, fixed = TRUE)
+olej_kukurydziany <- grepl(toupper("Olej kukurydziany"), wszystko$Nazwa, fixed = TRUE)
+
+idx_olej_rzepakowy <- which(olej_rzepakowy == 1)
+idx_olej_slonecznikowy <- which(olej_slonecznikowy == 1)
+idx_olej_lniany <- which(olej_lniany == 1)
+idx_olej_kokosowy <- which(olej_kokosowy == 1)
+idx_olej_z_pestek_winogron <- which(olej_z_pestek_winogron == 1)
+idx_olej_z_lnu <- which(olej_z_lnu == 1)
+idx_olej_kukurydziany <- which(olej_kukurydziany == 1)
+
+wszystko$Nazwa[idx_olej_rzepakowy]
+wszystko$Nazwa[idx_olej_slonecznikowy]
+wszystko$Nazwa[idx_olej_lniany]
+wszystko$Nazwa[idx_olej_kokosowy]
+wszystko$Nazwa[idx_olej_z_pestek_winogron]
+wszystko$Nazwa[idx_olej_z_lnu]
+wszystko$Nazwa[idx_olej_kukurydziany]
+
+idx_pozostale_oleje_jadalne <- which(olej_rzepakowy == 1 | olej_slonecznikowy == 1 | olej_lniany == 1 | olej_kokosowy == 1 |
+                                       olej_z_pestek_winogron == 1 | olej_z_lnu == 1 | olej_kukurydziany == 1)
+
+wszystko$Nazwa[idx_pozostale_oleje_jadalne]
+
+srednie[41] <- mean(wszystko$Cena[idx_pozostale_oleje_jadalne])
+# 20.99833
+
+wariancje[41] <- var(wszystko$Cena[idx_pozostale_oleje_jadalne])
+# 37.66083
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 42. Pozostale tluszcze zwierzece
+
+smalec <- grepl(toupper("Smalec"), wszystko$Nazwa, fixed = TRUE)
+slonina <- grepl(toupper("Słonina"), wszystko$Nazwa, fixed = TRUE)
+skwarki <- grepl(toupper("Skwarki"), wszystko$Nazwa, fixed = TRUE)
+tran <- grepl(toupper("Tran "), wszystko$Nazwa, fixed = TRUE)
+loj <- grepl(toupper("Łój"), wszystko$Nazwa, fixed = TRUE)
+olej_kostny <- grepl(toupper("Olej kostny"), wszystko$Nazwa, fixed = TRUE)
+gesi_smalec <- grepl(toupper("Gęsi smalec"), wszystko$Nazwa, fixed = TRUE)
+
+idx_smalec <- which(smalec == 1)
+idx_slonina <- which(slonina == 1)
+idx_skwarki <- which(skwarki == 1)
+idx_tran <- which(tran == 1)
+idx_loj <- which(loj == 1)
+idx_olej_kostny <- which(olej_kostny == 1)
+idx_gesi_smalec <- which(gesi_smalec == 1)
+
+wszystko$Nazwa[idx_smalec]
+wszystko$Nazwa[idx_slonina]
+wszystko$Nazwa[idx_skwarki]
+wszystko$Nazwa[idx_tran]
+wszystko$Nazwa[idx_loj]
+wszystko$Nazwa[idx_olej_kostny]
+wszystko$Nazwa[idx_gesi_smalec]
+
+idx_pozostale_tluszcze_zwierzece <- which(smalec == 1 | slonina == 1 | skwarki == 1 | tran == 1 |
+                                            loj == 1 | olej_kostny == 1 | gesi_smalec == 1)
+
+wszystko$Nazwa[idx_pozostale_tluszcze_zwierzece]
+
+srednie[42] <- mean(wszystko$Cena[idx_pozostale_tluszcze_zwierzece])
+
+wariancje[42] <- var(wszystko$Cena[idx_pozostale_tluszcze_zwierzece])
+
+
+
+
+
+
+
+
+
+
+
+# 43. Owoce cytrusowe 
+
+cytryna <- grepl(toupper("Cytryna"), wszystko$Nazwa, fixed = TRUE)
+limonka <- grepl(toupper("Limonka"), wszystko$Nazwa, fixed = TRUE)
+pomarancza <- grepl(toupper("Pomarańcza"), wszystko$Nazwa, fixed = TRUE)
+mandarynka <- grepl(toupper("Mandarynka"), wszystko$Nazwa, fixed = TRUE)
+grejpfrut <- grepl(toupper("Grejpfrut"), wszystko$Nazwa, fixed = TRUE)
+piwo <- grepl(toupper("PIWO"), wszystko$Nazwa, fixed = TRUE)
+sok <- grepl(toupper("SOK"), wszystko$Nazwa, fixed = TRUE)
+
+idx_cytryna <- which(cytryna == 1)
+idx_limonka <- which(limonka == 1)
+idx_pomarancza <- which(pomarancza == 1)
+idx_mandarynka <- which(mandarynka == 1)
+idx_grejpfrut <- which(grejpfrut == 1)
+
+wszystko$Nazwa[idx_cytryna]
+wszystko$Nazwa[idx_limonka]
+wszystko$Nazwa[idx_pomarancza]
+wszystko$Nazwa[idx_mandarynka]
+wszystko$Nazwa[idx_grejpfrut]
+
+idx_owoce_cytrusowe <- which((cytryna == 1 | limonka == 1 | pomarancza == 1 | mandarynka == 1 | grejpfrut == 1) & piwo == 0 & sok == 0)
+
+wszystko$Nazwa[idx_owoce_cytrusowe]
+
+srednie[43] <- mean(wszystko$Cena[idx_owoce_cytrusowe])
+
+wariancje[43] <- var(wszystko$Cena[idx_owoce_cytrusowe])
+
+
+
+
+
+# 44. Banany 
+
+
+banany <- grepl(toupper("Banany "), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_banany <- which(banany == 1)
+
+wszystko$Nazwa[idx_banany]
+
+
+
+
+
+
+
+srednie[44] <- mean(wszystko$Cena[idx_banany])
+# NaN
+
+wariancje[44] <- var(wszystko$Cena[idx_banany])
+# NA
+
+
+
+# 45. Jablka
+
+jablka <- grepl(toupper("Jabłka"), wszystko$Nazwa, fixed = TRUE)
+
+idx_jablka <- which(jablka == 1)
+
+wszystko$Nazwa[idx_jablka]
+
+srednie[45] <- mean(wszystko$Cena[idx_jablka])
+# 7.923333
+
+wariancje[45] <- var(wszystko$Cena[idx_jablka])
+# 1.453333
+
+
+
+
+# 46. Owoce jagodowe
+
+jagody <- grepl(toupper("Jagody"), wszystko$Nazwa, fixed = TRUE)
+borowki <- grepl(toupper("Borówki"), wszystko$Nazwa, fixed = TRUE)
+
+idx_jagody <- which(jagody == 1)
+idx_borowki <- which(borowki == 1)
+
+wszystko$Nazwa[idx_jagody]
+wszystko$Nazwa[idx_borowki]
+
+idx_owoce_jagodowe <- which(jagody == 1 | borowki == 1)
+
+wszystko$Nazwa[idx_owoce_jagodowe]
+
+srednie[46] <- mean(wszystko$Cena[idx_owoce_jagodowe])
+# 12.39
+
+wariancje[46] <- var(wszystko$Cena[idx_owoce_jagodowe])
+# NA
+
+
+
+
+# 47. Owoce pestkowe
+
+sliwki <- grepl(toupper("Śliwki"), wszystko$Nazwa, fixed = TRUE)
+czeresnie <- grepl(toupper("Czereśnie"), wszystko$Nazwa, fixed = TRUE)
+wisnie <- grepl(toupper("Wiśnie"), wszystko$Nazwa, fixed = TRUE)
+brzoskwinie <- grepl(toupper("Brzoskwinie"), wszystko$Nazwa, fixed = TRUE)
+morele <- grepl(toupper("Morele"), wszystko$Nazwa, fixed = TRUE)
+nektarynki <- grepl(toupper("Nektarynki"), wszystko$Nazwa, fixed = TRUE)
+daktyle <- grepl(toupper("Daktyle"), wszystko$Nazwa, fixed = TRUE)
+
+idx_sliwki <- which(sliwki == 1)
+idx_czeresnie <- which(czeresnie == 1)
+idx_wisnie <- which(wisnie == 1)
+idx_brzoskwinie <- which(brzoskwinie == 1)
+idx_morele <- which(morele == 1)
+idx_nektarynki <- which(nektarynki == 1)
+idx_daktyle <- which(daktyle == 1)
+
+wszystko$Nazwa[idx_sliwki]
+wszystko$Nazwa[idx_czeresnie]
+wszystko$Nazwa[idx_wisnie]
+wszystko$Nazwa[idx_brzoskwinie]
+wszystko$Nazwa[idx_morele]
+wszystko$Nazwa[idx_nektarynki]
+wszystko$Nazwa[idx_daktyle]
+
+idx_owoce_pestkowe <- which(sliwki == 1 | czeresnie == 1 | wisnie == 1 | brzoskwinie == 1 | morele == 1 | nektarynki == 1 | daktyle == 1)
+
+wszystko$Nazwa[idx_owoce_pestkowe]
+
+srednie[47] <- mean(wszystko$Cena[idx_owoce_pestkowe])
+# 8.104286
+
+wariancje[47] <- var(wszystko$Cena[idx_owoce_pestkowe])
+# 5.521429
+
+
+
+
+
+
+
+
+# 48. Pozostale owoce
+
+gruszka <- grepl(toupper("Gruszka"), wszystko$Nazwa, fixed = TRUE)
+gruszki <- grepl(toupper("Gruszki"), wszystko$Nazwa, fixed = TRUE)
+kiwi <- grepl(toupper("Kiwi"), wszystko$Nazwa, fixed = TRUE)
+
+idx_gruszka <- which(gruszka == 1)
+idx_gruszki <- which(gruszki == 1)
+idx_kiwi <- which(kiwi == 1)
+
+wszystko$Nazwa[idx_gruszka]
+wszystko$Nazwa[idx_gruszki]
+wszystko$Nazwa[idx_kiwi]
+
+
+idx_pozostale_owoce <- which(gruszka == 1 | gruszki == 1 | kiwi == 1)
+
+wszystko$Nazwa[idx_pozostale_owoce]
+
+srednie[48] <- mean(wszystko$Cena[idx_pozostale_owoce])
+
+wariancje[48] <- var(wszystko$Cena[idx_pozostale_owoce])
+
+
+
+
+
+
+
+
+
+# 49. Owoce mrozone
+
+cytryna <- grepl(toupper("Cytryna"), wszystko$Nazwa, fixed = TRUE)
+limonka <- grepl(toupper("Limonka"), wszystko$Nazwa, fixed = TRUE)
+pomarancza <- grepl(toupper("Pomarańcza"), wszystko$Nazwa, fixed = TRUE)
+mandarynka <- grepl(toupper("Mandarynka"), wszystko$Nazwa, fixed = TRUE)
+grejpfrut <- grepl(toupper("Grejpfrut"), wszystko$Nazwa, fixed = TRUE)
+banany <- grepl(toupper("Banany "), wszystko$Nazwa, fixed = TRUE)
+jablka <- grepl(toupper("Jabłka"), wszystko$Nazwa, fixed = TRUE)
+jagody <- grepl(toupper("Jagody"), wszystko$Nazwa, fixed = TRUE)
+borowki <- grepl(toupper("Borówki"), wszystko$Nazwa, fixed = TRUE)
+sliwki <- grepl(toupper("Śliwki"), wszystko$Nazwa, fixed = TRUE)
+czeresnie <- grepl(toupper("Czereśnie"), wszystko$Nazwa, fixed = TRUE)
+wisnie <- grepl(toupper("Wiśnie"), wszystko$Nazwa, fixed = TRUE)
+brzoskwinie <- grepl(toupper("Brzoskwinie"), wszystko$Nazwa, fixed = TRUE)
+morele <- grepl(toupper("Morele"), wszystko$Nazwa, fixed = TRUE)
+nektarynki <- grepl(toupper("Nektarynki"), wszystko$Nazwa, fixed = TRUE)
+daktyle <- grepl(toupper("Daktyle"), wszystko$Nazwa, fixed = TRUE)
+gruszka <- grepl(toupper("Gruszka"), wszystko$Nazwa, fixed = TRUE)
+gruszki <- grepl(toupper("Gruszki"), wszystko$Nazwa, fixed = TRUE)
+kiwi <- grepl(toupper("Kiwi"), wszystko$Nazwa, fixed = TRUE)
+mrozona <- grepl(toupper("mrożona"), wszystko$Nazwa, fixed = TRUE)
+mrozony <- grepl(toupper("mrożony"), wszystko$Nazwa, fixed = TRUE)
+mrozone <- grepl(toupper("mrożone"), wszystko$Nazwa, fixed = TRUE)
+
+idx_owoce_mrozone <- which(
+  (cytryna == 1 & mrozona == 1)
+  |
+    (limonka == 1 & mrozona == 1)
+  |
+    (pomarancza == 1 & mrozona == 1)
+  |
+    (mandarynka == 1 & mrozona == 1)
+  |
+    (grejpfrut == 1 & mrozony == 1)
+  |
+    (banany == 1 & mrozone == 1)
+  |
+    (jablka == 1 & mrozone == 1)
+  |
+    (jagody == 1 & mrozone == 1)
+  |
+    (borowki == 1 & mrozone == 1)
+  |
+    (sliwki == 1 & mrozone == 1)
+  |
+    (czeresnie == 1 & mrozone == 1)
+  |
+    (wisnie == 1 & mrozone == 1)
+  |
+    (brzoskwinie == 1 & mrozone == 1)
+  |
+    (morele == 1 & mrozone == 1)
+  |
+    (nektarynki == 1 & mrozone == 1)
+  |
+    (daktyle == 1 & mrozone == 1)
+  |
+    (gruszka == 1 & mrozona == 1)
+  |
+    (gruszki == 1 & mrozone == 1)
+  |
+    (kiwi == 1 & mrozone == 1)
+)  
+
+wszystko$Nazwa[idx_owoce_mrozone]
+
+srednie[49] <- mean(wszystko$Cena[idx_owoce_mrozone])
+
+wariancje[49] <- var(wszystko$Cena[idx_owoce_mrozone])
+
+
+
+
+
+
+
+
+
+# 50. Owoce suszone i orzechy
+
+cytryna <- grepl(toupper("Cytryna"), wszystko$Nazwa, fixed = TRUE)
+limonka <- grepl(toupper("Limonka"), wszystko$Nazwa, fixed = TRUE)
+pomarancza <- grepl(toupper("Pomarańcza"), wszystko$Nazwa, fixed = TRUE)
+mandarynka <- grepl(toupper("Mandarynka"), wszystko$Nazwa, fixed = TRUE)
+grejpfrut <- grepl(toupper("Grejpfrut"), wszystko$Nazwa, fixed = TRUE)
+banany <- grepl(toupper("Banany "), wszystko$Nazwa, fixed = TRUE)
+jablka <- grepl(toupper("Jabłka"), wszystko$Nazwa, fixed = TRUE)
+jagody <- grepl(toupper("Jagody"), wszystko$Nazwa, fixed = TRUE)
+borowki <- grepl(toupper("Borówki"), wszystko$Nazwa, fixed = TRUE)
+sliwki <- grepl(toupper("Śliwki"), wszystko$Nazwa, fixed = TRUE)
+czeresnie <- grepl(toupper("Czereśnie"), wszystko$Nazwa, fixed = TRUE)
+wisnie <- grepl(toupper("Wiśnie"), wszystko$Nazwa, fixed = TRUE)
+brzoskwinie <- grepl(toupper("Brzoskwinie"), wszystko$Nazwa, fixed = TRUE)
+morele <- grepl(toupper("Morele"), wszystko$Nazwa, fixed = TRUE)
+nektarynki <- grepl(toupper("Nektarynki"), wszystko$Nazwa, fixed = TRUE)
+daktyle <- grepl(toupper("Daktyle"), wszystko$Nazwa, fixed = TRUE)
+gruszka <- grepl(toupper("Gruszka"), wszystko$Nazwa, fixed = TRUE)
+gruszki <- grepl(toupper("Gruszki"), wszystko$Nazwa, fixed = TRUE)
+kiwi <- grepl(toupper("Kiwi"), wszystko$Nazwa, fixed = TRUE)
+suszona <- grepl(toupper("suszona"), wszystko$Nazwa, fixed = TRUE)
+suszony <- grepl(toupper("suszony"), wszystko$Nazwa, fixed = TRUE)
+suszone <- grepl(toupper("suszone"), wszystko$Nazwa, fixed = TRUE)
+
+orzech <- grepl(toupper("Orzech"), wszystko$Nazwa, fixed = TRUE)
+orzeszki <- grepl(toupper("Orzeszki"), wszystko$Nazwa, fixed = TRUE)
+orzeszek <- grepl(toupper("Orzeszek"), wszystko$Nazwa, fixed = TRUE)
+
+idx_owoce_suszone <- which(
+  (cytryna == 1 & suszona == 1)
+  |
+    (limonka == 1 & suszona == 1)
+  |
+    (pomarancza == 1 & suszona == 1)
+  |
+    (mandarynka == 1 & suszona == 1)
+  |
+    (grejpfrut == 1 & suszony == 1)
+  |
+    (banany == 1 & suszone == 1)
+  |
+    (jablka == 1 & suszone == 1)
+  |
+    (jagody == 1 & suszone == 1)
+  |
+    (borowki == 1 & suszone == 1)
+  |
+    (sliwki == 1 & suszone == 1)
+  |
+    (czeresnie == 1 & suszone == 1)
+  |
+    (wisnie == 1 & suszone == 1)
+  |
+    (brzoskwinie == 1 & suszone == 1)
+  |
+    (morele == 1 & suszone == 1)
+  |
+    (nektarynki == 1 & suszone == 1)
+  |
+    (daktyle == 1 & suszone == 1)
+  |
+    (gruszka == 1 & suszona == 1)
+  |
+    (gruszki == 1 & suszone == 1)
+  |
+    (kiwi == 1 & suszone == 1)
+)  
+
+idx_owoce_suszone_i_orzechy <- which(
+  (cytryna == 1 & suszona == 1)
+  |
+    (limonka == 1 & suszona == 1)
+  |
+    (pomarancza == 1 & suszona == 1)
+  |
+    (mandarynka == 1 & suszona == 1)
+  |
+    (grejpfrut == 1 & suszony == 1)
+  |
+    (banany == 1 & suszone == 1)
+  |
+    (jablka == 1 & suszone == 1)
+  |
+    (jagody == 1 & suszone == 1)
+  |
+    (borowki == 1 & suszone == 1)
+  |
+    (sliwki == 1 & suszone == 1)
+  |
+    (czeresnie == 1 & suszone == 1)
+  |
+    (wisnie == 1 & suszone == 1)
+  |
+    (brzoskwinie == 1 & suszone == 1)
+  |
+    (morele == 1 & suszone == 1)
+  |
+    (nektarynki == 1 & suszone == 1)
+  |
+    (daktyle == 1 & suszone == 1)
+  |
+    (gruszka == 1 & suszona == 1)
+  |
+    (gruszki == 1 & suszone == 1)
+  |
+    (kiwi == 1 & suszone == 1)
+  |
+    orzech == 1
+  |
+    orzeszki == 1
+  | 
+    orzeszek == 1
+) 
+
+
+wszystko$Nazwa[idx_owoce_suszone]
+
+wszystko$Nazwa[idx_owoce_suszone_i_orzechy]
+
+srednie[50] <- mean(wszystko$Cena[idx_owoce_suszone_i_orzechy])
+
+wariancje[50] <- var(wszystko$Cena[idx_owoce_suszone_i_orzechy])
+
+
+
+
+
+
+
+
+
+
+# 51. Przetwory owocowe
+
+dzem <- grepl(toupper("Dżem"), wszystko$Nazwa, fixed = TRUE)
+konfitura <- grepl(toupper("Konfitura"), wszystko$Nazwa, fixed = TRUE)
+marmolada <- grepl(toupper("Marmolada"), wszystko$Nazwa, fixed = TRUE)
+powidla <- grepl(toupper("Powidła"), wszystko$Nazwa, fixed = TRUE)
+kompot <- grepl(toupper("Kompot"), wszystko$Nazwa, fixed = TRUE)
+budyn_owocowy <- grepl(toupper("Budyń owocowy"), wszystko$Nazwa, fixed = TRUE)
+
+idx_przetwory_owocowe <- which(dzem == 1 | konfitura == 1 | marmolada == 1 | powidla == 1 | kompot == 1 | budyn_owocowy == 1)
+
+wszystko$Nazwa[idx_przetwory_owocowe]
+
+srednie[51] <- mean(wszystko$Cena[idx_przetwory_owocowe])
+
+wariancje[51] <- var(wszystko$Cena[idx_przetwory_owocowe])
+
+
+
+
+
+
+# 52. Salata
+
+salata <- grepl(toupper("Sałata"), wszystko$Nazwa, fixed = TRUE)
+salatka <- grepl(toupper("Sałatka"), wszystko$Nazwa, fixed = TRUE)
+
+idx_salata <- which(salata == 1)
+idx_salatka <- which(salatka == 1)
+
+wszystko$Nazwa[idx_salata]
+wszystko$Nazwa[idx_salatka]
+
+idx_wszystkie_salaty <- which(salata == 1 | salatka == 1)
+
+wszystko$Nazwa[idx_wszystkie_salaty]
+
+srednie[52] <- mean(wszystko$Cena[idx_wszystkie_salaty])
+
+wariancje[52] <- var(wszystko$Cena[idx_wszystkie_salaty])
+
+
+
+# 53. Kapusta
+
+kapusta <- grepl(toupper("Kapusta"), wszystko$Nazwa, fixed = TRUE)
+
+idx_kapusta <- which(kapusta == 1)
+
+wszystko$Nazwa[idx_kapusta]
+
+srednie[53] <- mean(wszystko$Cena[idx_kapusta])
+# 7.056667
+
+wariancje[53] <- var(wszystko$Cena[idx_kapusta])
+# 15.74267
+
+
+
+# 54. Kalafiorowate
+
+kalafior <- grepl(toupper("Kalafior "), wszystko$Nazwa, fixed = TRUE)
+brokula <- grepl(toupper("Brokuła "), wszystko$Nazwa, fixed = TRUE)
+brokuly <- grepl(toupper("Brokuły "), wszystko$Nazwa, fixed = TRUE)
+
+idx_kalafior <- which(kalafior == 1)
+idx_brokula <- which(brokula == 1)
+idx_brokuly <- which(brokuly == 1)
+
+wszystko$Nazwa[idx_kalafior]
+wszystko$Nazwa[idx_brokula]
+wszystko$Nazwa[idx_brokuly]
+
+idx_kalafiorowate <- which(kalafior == 1 | brokula == 1 | brokuly == 1)
+
+wszystko$Nazwa[idx_kalafiorowate]
+
+srednie[54] <- mean(wszystko$Cena[idx_kalafiorowate])
+
+wariancje[54] <- var(wszystko$Cena[idx_kalafiorowate])
+
+
+
+
+
+# 55. Pomidory
+
+pomidory <- grepl(toupper("Pomidory"), wszystko$Nazwa, fixed = TRUE)
+
+idx_pomidory <- which(pomidory == 1)
+
+wszystko$Nazwa[idx_pomidory]
+
+srednie[55] <- mean(wszystko$Cena[idx_pomidory])
+# 6.2405
+
+wariancje[55] <- var(wszystko$Cena[idx_pomidory])
+# 16.91506
+
+
+
+
+
+# 56. Ogorki
+
+ogorki <- grepl(toupper("Ogórki"), wszystko$Nazwa, fixed = TRUE)
+ogorek <- grepl(toupper("Ogórek"), wszystko$Nazwa, fixed = TRUE)
+
+idx_ogorki <- which(ogorki == 1)
+idx_ogorek <- which(ogorek == 1)
+
+wszystko$Nazwa[idx_ogorki]
+wszystko$Nazwa[idx_ogorek]
+
+idx_wszystkie_ogorki <- which(ogorki == 1 | ogorek == 1)
+
+wszystko$Nazwa[idx_wszystkie_ogorki]
+
+srednie[56] <- mean(wszystko$Cena[idx_wszystkie_ogorki])
+# 7.378889
+
+wariancje[56] <- var(wszystko$Cena[idx_wszystkie_ogorki])
+# 4.244575
+
+
+
+
+
+# 57. Marchew
+
+marchew <- grepl(toupper("Marchew"), wszystko$Nazwa, fixed = TRUE)
+sok <- grepl(toupper("SOK "), wszystko$Nazwa, fixed = TRUE)
+
+idx_marchew <- which(marchew == 1 & sok == 0)
+
+wszystko$Nazwa[idx_marchew]
+
+srednie[57] <- mean(wszystko$Cena[idx_marchew])
+# 4.823333
+
+wariancje[57] <- var(wszystko$Cena[idx_marchew])
+# 0.3633333
+
+
+
+
+# 58. Buraki
+
+buraki <- grepl(toupper("Buraki"), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_buraki <- which(buraki == 1)
+
+wszystko$Nazwa[idx_buraki]
+
+
+
+
+
+
+
+srednie[58] <- mean(wszystko$Cena[idx_buraki])
+
+wariancje[58] <- var(wszystko$Cena[idx_buraki])
+
+
+
+
+
+
+
+# 59. Cebula
+
+cebula <- grepl(toupper("Cebula"), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_cebula <- which(cebula == 1)
+
+wszystko$Nazwa[idx_cebula]
+
+
+
+
+
+
+
+srednie[59] <- mean(wszystko$Cena[idx_cebula])
+# 2.32
+
+wariancje[59] <- var(wszystko$Cena[idx_cebula])
+# 1.1858
+
+
+
+
+
+
+
+
+
+
+# 60. Pozostale warzywa i grzyby
+
+por <- grepl(toupper("Por "), wszystko$Nazwa, fixed = TRUE)
+pietruszka <- grepl(toupper("Pietruszka "), wszystko$Nazwa, fixed = TRUE)
+szczypior <- grepl(toupper("Szczypior "), wszystko$Nazwa, fixed = TRUE)
+grzyby <- grepl(toupper("Grzyby "), wszystko$Nazwa, fixed = TRUE)
+pieczarki <- grepl(toupper("Pieczarki "), wszystko$Nazwa, fixed = TRUE)
+borowik <- grepl(toupper("Borowik"), wszystko$Nazwa, fixed = TRUE)
+podgrzybek_brunatny <- grepl(toupper("Podgrzybek brunatny"), wszystko$Nazwa, fixed = TRUE)
+
+idx_pozostale_warzywa_i_grzyby <- which(por == 1 | pietruszka == 1 | szczypior == 1 | grzyby == 1 | pieczarki == 1 | borowik == 1|
+                                          podgrzybek_brunatny == 1)
+
+wszystko$Nazwa[idx_pozostale_warzywa_i_grzyby]
+
+
+
+srednie[60] <- mean(wszystko$Cena[idx_pozostale_warzywa_i_grzyby])
+# 2.32
+
+wariancje[60] <- var(wszystko$Cena[idx_pozostale_warzywa_i_grzyby])
+# 1.1858
+
+
+
+
+
+
+
+
+# 61. Warzywa i grzyby mrozone
+
+salata <- grepl(toupper("Sałata"), wszystko$Nazwa, fixed = TRUE)
+salatka <- grepl(toupper("Sałatka"), wszystko$Nazwa, fixed = TRUE)
+kapusta <- grepl(toupper("Kapusta"), wszystko$Nazwa, fixed = TRUE)
+kalafior <- grepl(toupper("Kalafior"), wszystko$Nazwa, fixed = TRUE)
+brokula <- grepl(toupper("Brokuła"), wszystko$Nazwa, fixed = TRUE)
+brokuly <- grepl(toupper("Brokuły"), wszystko$Nazwa, fixed = TRUE)
+pomidory <- grepl(toupper("Pomidory"), wszystko$Nazwa, fixed = TRUE)
+ogorki <- grepl(toupper("Ogórki"), wszystko$Nazwa, fixed = TRUE)
+ogorek <- grepl(toupper("Ogórek"), wszystko$Nazwa, fixed = TRUE)
+marchew <- grepl(toupper("Marchew"), wszystko$Nazwa, fixed = TRUE)
+buraki <- grepl(toupper("Buraki"), wszystko$Nazwa, fixed = TRUE)
+cebula <- grepl(toupper("Cebula"), wszystko$Nazwa, fixed = TRUE)
+por <- grepl(toupper("Por "), wszystko$Nazwa, fixed = TRUE)
+pietruszka <- grepl(toupper("Pietruszka "), wszystko$Nazwa, fixed = TRUE)
+szczypior <- grepl(toupper("Szczypior "), wszystko$Nazwa, fixed = TRUE)
+grzyby <- grepl(toupper("Grzyby "), wszystko$Nazwa, fixed = TRUE)
+pieczarki <- grepl(toupper("Pieczarki "), wszystko$Nazwa, fixed = TRUE)
+borowik <- grepl(toupper("Borowik"), wszystko$Nazwa, fixed = TRUE)
+podgrzybek_brunatny <- grepl(toupper("Podgrzybek brunatny"), wszystko$Nazwa, fixed = TRUE)
+mrozona <- grepl(toupper("mrożona"), wszystko$Nazwa, fixed = TRUE)
+mrozony <- grepl(toupper("mrożony"), wszystko$Nazwa, fixed = TRUE)
+mrozone <- grepl(toupper("mrożone"), wszystko$Nazwa, fixed = TRUE)
+
+idx_warzywa_i_grzyby <- which(
+  (salata == 1)
+  |
+    (salatka == 1)
+  |
+    (kapusta == 1)
+  |
+    (kalafior == 1)
+  |
+    (brokula == 1)
+  |
+    (brokuly == 1)
+  |
+    (pomidory == 1)
+  |
+    (ogorki == 1)
+  |
+    (ogorek == 1)
+  |
+    (marchew == 1)
+  |
+    (buraki == 1)
+  |
+    (cebula == 1)
+  |
+    (por == 1)
+  |
+    (pietruszka == 1)
+  |
+    (szczypior == 1)
+  |
+    (grzyby == 1)
+  |
+    (pieczarki == 1)
+  |
+    (borowik == 1)
+  |
+    (podgrzybek_brunatny == 1)
+)
+
+wszystko$Nazwa[idx_warzywa_i_grzyby]
+
+idx_warzywa_i_grzyby_mrozone <- which(
+  (salata == 1 & mrozona == 1)
+  |
+    (salatka == 1 & mrozona == 1)
+  |
+    (kapusta == 1 & mrozona == 1)
+  |
+    (kalafior == 1 & mrozony == 1)
+  |
+    (brokula == 1 & mrozona == 1)
+  |
+    (brokuly == 1 & mrozone == 1)
+  |
+    (pomidory == 1 & mrozone == 1)
+  |
+    (ogorki == 1 & mrozone == 1)
+  |
+    (ogorek == 1 & mrozony == 1)
+  |
+    (marchew == 1 & mrozona == 1)
+  |
+    (buraki == 1 & mrozone == 1)
+  |
+    (cebula == 1 & mrozona == 1)
+  |
+    (por == 1 & mrozona == 1)
+  |
+    (pietruszka == 1 & mrozona == 1)
+  |
+    (szczypior == 1 & mrozony == 1)
+  |
+    (grzyby == 1 & mrozone == 1)
+  |
+    (pieczarki == 1 & mrozone == 1)
+  |
+    (borowik == 1 & mrozony == 1)
+  |
+    (podgrzybek_brunatny == 1 & mrozony == 1)
+)
+
+wszystko$Nazwa[idx_warzywa_i_grzyby_mrozone]
+
+
+
+srednie[61] <- mean(wszystko$Cena[idx_warzywa_i_grzyby_mrozone])
+
+wariancje[61] <- var(wszystko$Cena[idx_warzywa_i_grzyby_mrozone])
+
+
+
+
+
+
+
+
+
+
+
+# 62. Kapusta kwaszona
+
+kapusta_kwaszona <- grepl(toupper("Kapusta kwaszona"), wszystko$Nazwa, fixed = TRUE)
+
+idx_kapusta_kwaszona <- which(kapusta_kwaszona == 1)
+
+wszystko$Nazwa[idx_kapusta_kwaszona]
+
+
+
+srednie[62] <- mean(wszystko$Cena[idx_kapusta_kwaszona])
+
+wariancje[62] <- var(wszystko$Cena[idx_kapusta_kwaszona])
+
+
+
+
+
+
+
+
+# 63. Pozostale przetwory warzywne i grzybowe
+
+kapusta_kiszona <- grepl(toupper("Kapusta kiszona"), wszystko$Nazwa, fixed = TRUE)
+cukinie_w_oliwie <- grepl(toupper("Cukinie w oliwie"), wszystko$Nazwa, fixed = TRUE)
+kiszone_pomidory <- grepl(toupper("Kiszone pomidory"), wszystko$Nazwa, fixed = TRUE)
+czosnek_pieczony <- grepl(toupper("Czosnek pieczony"), wszystko$Nazwa, fixed = TRUE)
+ogorki_w_ketchupie <- grepl(toupper("Ogórki w ketchupie"), wszystko$Nazwa, fixed = TRUE)
+kiszone_buraki <- grepl(toupper("Kiszone buraki"), wszystko$Nazwa, fixed = TRUE)
+
+idx_pozostale_przetwory_warzywne_i_grzybowe <- which(kapusta_kiszona == 1 | cukinie_w_oliwie == 1 | kiszone_pomidory == 1 | 
+                                                       czosnek_pieczony == 1 | ogorki_w_ketchupie == 1 | kiszone_buraki == 1)
+
+wszystko$Nazwa[idx_pozostale_przetwory_warzywne_i_grzybowe]
+
+srednie[63] <- mean(wszystko$Cena[idx_pozostale_przetwory_warzywne_i_grzybowe])
+
+wariancje[63] <- var(wszystko$Cena[idx_pozostale_przetwory_warzywne_i_grzybowe])
+
+
+
+
+
+
+
+
+
+
+# 64. Ziemniaki
+
+
+
+
+
+ziemniaki <- grepl(toupper("Ziemniaki"), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_ziemniaki <- which(ziemniaki == 1)
+
+wszystko$Nazwa[idx_ziemniaki]
+
+
+
+
+
+
+
+srednie[64] <- mean(wszystko$Cena[idx_ziemniaki])
+# NaN
+
+wariancje[64] <- var(wszystko$Cena[idx_ziemniaki])
+# NA
+
+
+
+
+
+
+
+# 65. Przetwory ziemniaczane
+
+ziemniaczanka <- grepl(toupper("Ziemniaczanka"), wszystko$Nazwa, fixed = TRUE)
+kartoflanka <- grepl(toupper("Kartoflanka"), wszystko$Nazwa, fixed = TRUE)
+placki_ziemniaczane <- grepl(toupper("Placki ziemniaczane"), wszystko$Nazwa, fixed = TRUE)
+chipsy <- grepl(toupper("Chipsy"), wszystko$Nazwa, fixed = TRUE)
+frytki <- grepl(toupper("Frytki"), wszystko$Nazwa, fixed = TRUE)
+
+idx_przetwory_ziemniaczane <- which(ziemniaczanka == 1 | kartoflanka == 1 | placki_ziemniaczane == 1 | chipsy == 1 | frytki == 1)
+
+wszystko$Nazwa[idx_przetwory_ziemniaczane]
+
+srednie[65] <- mean(wszystko$Cena[idx_przetwory_ziemniaczane])
+
+wariancje[65] <- var(wszystko$Cena[idx_przetwory_ziemniaczane])
+
+
+
+
+
+
+
+
+# 66. Chipsy
+
+chipsy <- grepl(toupper("Chipsy"), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_chipsy <- which(chipsy == 1)
+
+wszystko$Nazwa[idx_chipsy]
+
+
+
+
+
+
+
+srednie[66] <- mean(wszystko$Cena[idx_chipsy])
+# 5.290253
+
+wariancje[66] <- var(wszystko$Cena[idx_chipsy])
+# 4.093759
+
+
+
+
+
+
+
+# 67. Pozostale warzywa bulwiaste i przetwory z warzyw bulwiastych           
+
+topinambur <- grepl(toupper("Topinambur"), wszystko$Nazwa, fixed = TRUE)
+seler <- grepl(toupper("Seler"), wszystko$Nazwa, fixed = TRUE)
+ziemniaczanka <- grepl(toupper("Ziemniaczanka"), wszystko$Nazwa, fixed = TRUE)
+kartoflanka <- grepl(toupper("Kartoflanka"), wszystko$Nazwa, fixed = TRUE)
+placki_ziemniaczane <- grepl(toupper("Placki ziemniaczane"), wszystko$Nazwa, fixed = TRUE)
+chipsy <- grepl(toupper("Chipsy"), wszystko$Nazwa, fixed = TRUE)
+frytki <- grepl(toupper("Frytki"), wszystko$Nazwa, fixed = TRUE)
+
+idx_pozostale_warzywa_bulwiaste_i_przetwory_z_warzyw_bulwiastych <- which(topinambur == 1 | seler == 1 | ziemniaczanka == 1 |
+                                                                            kartoflanka == 1 | placki_ziemniaczane == 1 | 
+                                                                            chipsy == 1 | frytki == 1)
+
+wszystko$Nazwa[idx_pozostale_warzywa_bulwiaste_i_przetwory_z_warzyw_bulwiastych]
+
+srednie[67] <- mean(wszystko$Cena[idx_pozostale_warzywa_bulwiaste_i_przetwory_z_warzyw_bulwiastych])
+
+wariancje[67] <- var(wszystko$Cena[idx_pozostale_warzywa_bulwiaste_i_przetwory_z_warzyw_bulwiastych])
+
+
+
+
+
+
+
+# 68. Cukier
+
+cukier <- grepl(toupper("Cukier "), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_cukier <- which(cukier == 1)
+
+wszystko$Nazwa[idx_cukier]
+
+
+
+
+
+
+
+srednie[68] <- mean(wszystko$Cena[idx_cukier])
+# 5.007949
+
+wariancje[68] <- var(wszystko$Cena[idx_cukier])
+# 15.87625
+
+
+
+
+# 69. Dzemy, marmolady i miod
+
+dzem <- grepl(toupper("Dżem "), wszystko$Nazwa, fixed = TRUE)
+marmolada <- grepl(toupper("Marmolada "), wszystko$Nazwa, fixed = TRUE)
+miod <- grepl(toupper("Miód "), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_dzem <- which(dzem == 1)
+idx_marmolada <- which(marmolada == 1)
+idx_miod <- which(miod == 1)
+
+wszystko$Nazwa[idx_dzem]
+wszystko$Nazwa[idx_marmolada]
+wszystko$Nazwa[idx_miod]
+
+
+idx_dzemy_marmolady_i_miod <- which(dzem == 1 | marmolada == 1 | miod == 1)
+
+wszystko$Nazwa[idx_dzemy_marmolady_i_miod]
+
+srednie[69] <- mean(wszystko$Cena[idx_dzemy_marmolady_i_miod])
+# 11.90111
+
+wariancje[69] <- var(wszystko$Cena[idx_dzemy_marmolady_i_miod])
+# 70.35625
+
+
+
+
+
+# 70. Czekolada
+
+czekolada <- grepl(toupper("Czekolada "), wszystko$Nazwa, fixed = TRUE)
+
+idx_czekolada <- which(czekolada == 1)
+
+wszystko$Nazwa[idx_czekolada]
+
+srednie[70] <- mean(wszystko$Cena[idx_czekolada])
+# 6.39085
+
+wariancje[70] <- var(wszystko$Cena[idx_czekolada])
+# 14.56686
+
+
+
+
+# 71. Wyroby cukiernicze
+
+ciastka <- grepl(toupper("Ciastka "), wszystko$Nazwa, fixed = TRUE)
+gofry <- grepl(toupper("Gofry "), wszystko$Nazwa, fixed = TRUE)
+rurki <- grepl(toupper("Rurki "), wszystko$Nazwa, fixed = TRUE)
+wafelek <- grepl(toupper("Wafelek "), wszystko$Nazwa, fixed = TRUE)
+wafelki <- grepl(toupper("Wafelki "), wszystko$Nazwa, fixed = TRUE)
+
+idx_ciastka <- which(ciastka == 1)
+idx_gofry <- which(gofry == 1)
+idx_rurki <- which(rurki == 1)
+idx_wafelek <- which(wafelek == 1)
+idx_wafelki <- which(wafelki == 1)
+
+wszystko$Nazwa[idx_ciastka]
+wszystko$Nazwa[idx_gofry]
+wszystko$Nazwa[idx_rurki]
+wszystko$Nazwa[idx_wafelek]
+wszystko$Nazwa[idx_wafelki]
+
+idx_wyroby_cukiernicze <- which(ciastka == 1 | gofry == 1 | rurki == 1 | wafelek == 1 | wafelki == 1)
+
+wszystko$Nazwa[idx_wyroby_cukiernicze]
+
+srednie[71] <- mean(wszystko$Cena[idx_wyroby_cukiernicze])
+# 5.41381
+
+wariancje[71] <- var(wszystko$Cena[idx_wyroby_cukiernicze])
+# 7.267069
+
+
+
+# 72. Lody
+
+lody <- grepl(toupper("Lody "), wszystko$Nazwa, fixed = TRUE)
+
+idx_lody <- which(lody == 1)
+
+wszystko$Nazwa[idx_lody]
+
+srednie[72] <- mean(wszystko$Cena[idx_lody])
+# 13.99
+
+wariancje[72] <- var(wszystko$Cena[idx_lody])
+# 0
+
+
+
+
+# 73. Sztuczne substytuty cukru
+
+aspartam <- grepl(toupper("Aspartam"), wszystko$Nazwa, fixed = TRUE)
+acesulfam_K <- grepl(toupper("Acesulfam K"), wszystko$Nazwa, fixed = TRUE)
+sacharyna <- grepl(toupper("Sacharyna"), wszystko$Nazwa, fixed = TRUE)
+sorbitol <- grepl(toupper("Sorbitol"), wszystko$Nazwa, fixed = TRUE)
+ksylitol <- grepl(toupper("Ksylitol"), wszystko$Nazwa, fixed = TRUE)
+mannitol <- grepl(toupper("Mannitol"), wszystko$Nazwa, fixed = TRUE)
+
+idx_aspartam <- which(aspartam == 1)
+idx_acesulfam_K <- which(acesulfam_K == 1)
+idx_sacharyna <- which(sacharyna == 1)
+idx_sorbitol <- which(sorbitol == 1)
+idx_ksylitol <- which(ksylitol == 1)
+idx_mannitol <- which(mannitol == 1)
+
+wszystko$Nazwa[idx_aspartam]
+wszystko$Nazwa[idx_acesulfam_K]
+wszystko$Nazwa[idx_sacharyna]
+wszystko$Nazwa[idx_sorbitol]
+wszystko$Nazwa[idx_ksylitol]
+wszystko$Nazwa[idx_mannitol]
+
+idx_sztuczne_substytuty_cukru <- which(aspartam == 1 | acesulfam_K == 1 | sacharyna == 1 | sorbitol == 1 | ksylitol == 1 | mannitol == 1)
+
+wszystko$Nazwa[idx_sztuczne_substytuty_cukru]
+
+srednie[73] <- mean(wszystko$Cena[idx_sztuczne_substytuty_cukru])
+# 23.29
+
+wariancje[73] <- var(wszystko$Cena[idx_sztuczne_substytuty_cukru])
+# 42.67333
+
+
+
+
+# 74. Sosy, przyprawy
+
+sos <- grepl(toupper("Sos "), wszystko$Nazwa, fixed = TRUE)
+przyprawa <- grepl(toupper("Przyprawa "), wszystko$Nazwa, fixed = TRUE)
+
+idx_sos <- which(sos == 1)
+idx_przyprawa <- which(przyprawa == 1)
+
+wszystko$Nazwa[idx_sos]
+wszystko$Nazwa[idx_przyprawa]
+
+idx_sosy_przyprawy <- which(sos == 1 | przyprawa == 1)
+
+wszystko$Nazwa[idx_sosy_przyprawy]
+
+srednie[74] <- mean(wszystko$Cena[idx_sosy_przyprawy])
+# 5.739238
+
+wariancje[74] <- var(wszystko$Cena[idx_sosy_przyprawy])
+# 19.69145
+
+
+
+
+# 75. Sol
+
+sol <- grepl(toupper("SÓL"), wszystko$Nazwa, fixed = TRUE)
+chipsy <- grepl(toupper("CHIPSY"), wszystko$Nazwa, fixed = TRUE)
+zel <- grepl(toupper("ŻEL"), wszystko$Nazwa, fixed = TRUE)
+mydlo <- grepl(toupper("MYDŁO"), wszystko$Nazwa, fixed = TRUE)
+maslo <- grepl(toupper("MASŁO"), wszystko$Nazwa, fixed = TRUE)
+do_kapieli <- grepl(toupper("DO KĄPIELI"), wszystko$Nazwa, fixed = TRUE)
+mlynek <- grepl(toupper("MŁYNEK"), wszystko$Nazwa, fixed = TRUE)
+paluchy <- grepl(toupper("PALUCHY"), wszystko$Nazwa, fixed = TRUE)
+paluszki <- grepl(toupper("PALUSZKI"), wszystko$Nazwa, fixed = TRUE)
+do_zmywarek <- grepl(toupper("DO ZMYWAREK"), wszystko$Nazwa, fixed = TRUE)
+
+idx_sol <- which(sol == 1 & chipsy == 0 & zel == 0 & mydlo == 0 & maslo == 0 & do_kapieli == 0 & mlynek == 0 & paluchy == 0 & paluszki == 0 & do_zmywarek == 0)
+
+wszystko$Nazwa[idx_sol]
+
+srednie[75] <- mean(wszystko$Cena[idx_sol])
+# 5.126111
+
+wariancje[75] <- var(wszystko$Cena[idx_sol])
+# 7.762373
+
+
+
+
+
+
+
+
+
+
+
+# 76. Przyprawy korzenne i ziola kulinarne
+
+anyz <- grepl(toupper("Anyż"), wszystko$Nazwa, fixed = TRUE)
+gozdzik <- grepl(toupper("Goździk"), wszystko$Nazwa, fixed = TRUE)
+wanilia <- grepl(toupper("Wanilia"), wszystko$Nazwa, fixed = TRUE)
+szafran <- grepl(toupper("Szafran"), wszystko$Nazwa, fixed = TRUE)
+kardamon <- grepl(toupper("Kardamon"), wszystko$Nazwa, fixed = TRUE)
+kurkuma <- grepl(toupper("Kurkuma"), wszystko$Nazwa, fixed = TRUE)
+galka_muszkatolowa <- grepl(toupper("Gałka muszkatołowa"), wszystko$Nazwa, fixed = TRUE)
+ziola_prowansalskie <- grepl(toupper("Zioła prowansalskie"), wszystko$Nazwa, fixed = TRUE)
+
+idx_przyprawy_korzenne_i_ziola_kulinarne <- which(anyz == 1 | gozdzik == 1 | wanilia == 1 | szafran == 1 | kardamon == 1 | kurkuma == 1 |
+                                                    galka_muszkatolowa == 1 | ziola_prowansalskie == 1)
+
+wszystko$Nazwa[idx_przyprawy_korzenne_i_ziola_kulinarne]
+
+srednie[76] <- mean(wszystko$Cena[idx_przyprawy_korzenne_i_ziola_kulinarne])
+
+wariancje[76] <- var(wszystko$Cena[idx_przyprawy_korzenne_i_ziola_kulinarne])
+
+
+
+
+
+
+
+
+
+
+# 77. Zywnosc dla dzieci
+
+bebiko <- grepl(toupper("Bebiko"), wszystko$Nazwa, fixed = TRUE)
+bobovita <- grepl(toupper("BoboVita"), wszystko$Nazwa, fixed = TRUE)
+gerber <- grepl(toupper("Gerber"), wszystko$Nazwa, fixed = TRUE)
+bebilon <- grepl(toupper("Bebilon"), wszystko$Nazwa, fixed = TRUE)
+hipp <- grepl(toupper("HiPP"), wszystko$Nazwa, fixed = TRUE)
+bobofrut <- grepl(toupper("Bobo Frut"), wszystko$Nazwa, fixed = TRUE)
+majtki <- grepl(toupper("MAJTKI"), wszystko$Nazwa, fixed = TRUE) # Moga sie trafiac np. pieluchomajtki dzieciecie z firmy produkujacej zywnosc dla dzieci.
+
+idx_bebiko <- which(bebiko == 1)
+idx_bobovita <- which(bobovita == 1)
+idx_gerber <- which(gerber == 1)
+idx_bebilon <- which(bebilon == 1)
+idx_hipp <- which(hipp == 1)
+idx_bobofrut <- which(bobofrut == 1)
+
+wszystko$Nazwa[idx_bebiko]
+wszystko$Nazwa[idx_bobovita]
+wszystko$Nazwa[idx_gerber]
+wszystko$Nazwa[idx_bebilon]
+wszystko$Nazwa[idx_hipp]
+wszystko$Nazwa[idx_bobofrut]
+
+idx_zywnosc_dla_dzieci <- which((bebiko == 1 | bobovita == 1 | gerber == 1 | bebilon == 1 | hipp == 1 | bobofrut == 1) & majtki == 0)
+
+wszystko$Nazwa[idx_zywnosc_dla_dzieci]
+
+srednie[77] <- mean(wszystko$Cena[idx_zywnosc_dla_dzieci])
+
+wariancje[77] <- var(wszystko$Cena[idx_zywnosc_dla_dzieci])
+
+
+
+# 78. Gotowe dania
+
+danie <- grepl(toupper("Danie "), wszystko$Nazwa, fixed = TRUE)
+
+idx_danie <- which(danie == 1)
+
+wszystko$Nazwa[idx_danie]
+
+srednie[78] <- mean(wszystko$Cena[idx_danie])
+# 5.281667
+
+wariancje[78] <- var(wszystko$Cena[idx_danie])
+# 1.148106
+
+
+
+
+
+
+
+
+
+
+# 79. Inne artykuly zywnosciowe, gdzie indziej niesklasyfikowane
+
+keks <- grepl(toupper("Keks "), wszystko$Nazwa, fixed = TRUE)
+
+idx_inne_artykuly_zywnosciowe_gdzie_indziej_niesklasyfikowane <- which(keks == 1)
+
+wszystko$Nazwa[idx_inne_artykuly_zywnosciowe_gdzie_indziej_niesklasyfikowane]
+
+srednie[79] <- mean(wszystko$Cena[idx_inne_artykuly_zywnosciowe_gdzie_indziej_niesklasyfikowane])
+
+wariancje[79] <- var(wszystko$Cena[idx_inne_artykuly_zywnosciowe_gdzie_indziej_niesklasyfikowane])
+
+
+
+
+
+
+
+# 80. Kawa
+
+kawa <- grepl(toupper("Kawa "), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_kawa <- which(kawa == 1)
+
+wszystko$Nazwa[idx_kawa]
+
+
+
+
+
+
+
+srednie[80] <- mean(wszystko$Cena[idx_kawa])
+# 12.34
+
+wariancje[80] <- var(wszystko$Cena[idx_kawa])
+# 11.045
+
+
+
+
+
+
+
+# 81. Herbata
+
+herbata <- grepl(toupper("Herbata "), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_herbata <- which(herbata == 1)
+
+wszystko$Nazwa[idx_herbata]
+
+
+
+
+
+
+
+srednie[81] <- mean(wszystko$Cena[idx_herbata])
+# 21.49
+
+wariancje[81] <- var(wszystko$Cena[idx_herbata])
+# 0
+
+
+
+
+
+
+
+
+# 82. Kakao i czekolada w proszku
+
+kakao <- grepl(toupper("Kakao "), wszystko$Nazwa, fixed = TRUE)
+czekolada <- grepl(toupper("CZEKOLADA"), wszystko$Nazwa, fixed = TRUE)
+w_proszku <- grepl(toupper("W PROSZKU"), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_kakao <- which(kakao == 1)
+idx_czekolada_w_proszku <- which(czekolada == 1 & w_proszku == 1)
+
+wszystko$Nazwa[idx_kakao]
+wszystko$Nazwa[idx_czekolada_w_proszku]
+
+
+idx_kakao_i_czekolada_w_proszku <- which(kakao == 1 | (czekolada == 1 & w_proszku == 1))
+
+wszystko$Nazwa[idx_kakao_i_czekolada_w_proszku]
+
+srednie[82] <- mean(wszystko$Cena[idx_kakao_i_czekolada_w_proszku])
+
+wariancje[82] <- var(wszystko$Cena[idx_kakao_i_czekolada_w_proszku])
+
+
+
+
+
+
+
+
+
+# 83. Wody mineralne lub zrodlane
+
+woda <- grepl(toupper("WODA"), wszystko$Nazwa, fixed = TRUE)
+mineralna <- grepl(toupper("MINERALNA"), wszystko$Nazwa, fixed = TRUE)
+zrodlana <- grepl(toupper("ŹRÓDLANA"), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_woda_mineralna <- which(woda == 1 & mineralna == 1)
+idx_woda_zrodlana <- which(woda == 1 & zrodlana == 1)
+
+wszystko$Nazwa[idx_woda_mineralna]
+wszystko$Nazwa[idx_woda_zrodlana]
+
+
+idx_wody_mineralne_lub_zrodlane <- which(woda == 1 & (mineralna == 1 | zrodlana == 1))
+
+wszystko$Nazwa[idx_wody_mineralne_lub_zrodlane]
+
+
+srednie[83] <- mean(wszystko$Cena[idx_wody_mineralne_lub_zrodlane])
+
+wariancje[83] <- var(wszystko$Cena[idx_wody_mineralne_lub_zrodlane])
+
+
+
+
+
+
+
+
+# 84. Napoje bezalkoholowe, gdzie indziej niesklasyfikowane
+
+sok <- grepl(toupper("Sok "), wszystko$Nazwa, fixed = TRUE)
+shake <- grepl(toupper("Shake "), wszystko$Nazwa, fixed = TRUE)
+aloes <- grepl(toupper("Napój aloesowy "), wszystko$Nazwa, fixed = TRUE)
+oranzada <- grepl(toupper("Oranżada "), wszystko$Nazwa, fixed = TRUE)
+cola <- grepl(toupper(" Cola "), wszystko$Nazwa, fixed = TRUE)
+pepsi <- grepl(toupper("Pepsi "), wszystko$Nazwa, fixed = TRUE)
+fanta <- grepl(toupper("Fanta "), wszystko$Nazwa, fixed = TRUE)
+mirinda <- grepl(toupper("Mirinda "), wszystko$Nazwa, fixed = TRUE)
+sprite <- grepl(toupper("Sprite "), wszystko$Nazwa, fixed = TRUE)
+sevenup <- grepl(toupper("7UP "), wszystko$Nazwa, fixed = TRUE)
+icetea <- grepl(toupper("Ice Tea "), wszystko$Nazwa, fixed = TRUE)
+
+
+idx_sok <- which(sok == 1)
+idx_shake <- which(shake == 1)
+idx_aloes <- which(aloes == 1)
+idx_oranzada <- which(oranzada == 1)
+idx_cola <- which(cola == 1)
+idx_pepsi <- which(pepsi == 1)
+idx_fanta <- which(fanta == 1)
+idx_mirinda <- which(mirinda == 1)
+idx_sprite <- which(sprite == 1)
+idx_sevenup <- which(sevenup == 1)
+idx_icetea <- which(icetea == 1)
+
+wszystko$Nazwa[idx_sok]
+wszystko$Nazwa[idx_shake]
+wszystko$Nazwa[idx_aloes]
+wszystko$Nazwa[idx_oranzada]
+wszystko$Nazwa[idx_cola]
+wszystko$Nazwa[idx_pepsi]
+wszystko$Nazwa[idx_fanta]
+wszystko$Nazwa[idx_mirinda]
+wszystko$Nazwa[idx_sprite]
+wszystko$Nazwa[idx_sevenup]
+wszystko$Nazwa[idx_icetea]
+
+
+idx_nap_bezalk <- which(sok == 1 | shake == 1 | aloes == 1 | oranzada | cola == 1 | pepsi == 1 | fanta == 1 | mirinda == 1 | 
+                          sprite == 1 | sevenup == 1 | icetea == 1)
+
+wszystko$Nazwa[idx_nap_bezalk]
+
+
+srednie[84] <- mean(wszystko$Cena[idx_nap_bezalk])
+# 4.228333
+
+wariancje[84] <- var(wszystko$Cena[idx_nap_bezalk])
+# 15.10527 
+
+
+
+
+
+
+
+
+
+
+
+
+# 85. Soki owocowe
+
+sok <- grepl(toupper("SOK "), wszystko$Nazwa, fixed = TRUE)
+jablkowy <- grepl(toupper("JABŁKOWY"), wszystko$Nazwa, fixed = TRUE)
+gruszkowy <- grepl(toupper("GRUSZKOWY"), wszystko$Nazwa, fixed = TRUE)
+pomaranczowy <- grepl(toupper("POMARAŃCZOWY"), wszystko$Nazwa, fixed = TRUE)
+ananasowy <- grepl(toupper("ANANASOWY"), wszystko$Nazwa, fixed = TRUE)
+wisniowy <- grepl(toupper("WIŚNIOWY"), wszystko$Nazwa, fixed = TRUE)
+truskawkowy <- grepl(toupper("TRUSKAWKOWY"), wszystko$Nazwa, fixed = TRUE)
+
+idx_soki_owocowe <- which(sok == 1 & (jablkowy == 1 | gruszkowy == 1 | pomaranczowy == 1 | ananasowy == 1 | wisniowy == 1 | truskawkowy == 1))
+
+wszystko$Nazwa[idx_soki_owocowe]
+
+srednie[85] <- mean(wszystko$Cena[idx_soki_owocowe])
+
+wariancje[85] <- var(wszystko$Cena[idx_soki_owocowe])
+
+
+
+
+
+
+
+
+
+
+
+# 86. Soki warzywne i  owocowo-warzywne
+
+sok <- grepl(toupper("Sok "), wszystko$Nazwa, fixed = TRUE)
+pomidorowy <- grepl(toupper("pomidorowy"), wszystko$Nazwa, fixed = TRUE)
+z_marchwi <- grepl(toupper("z marchwi"), wszystko$Nazwa, fixed = TRUE)
+
+idx_soki_warzywne_i_owocowo_warzywne <- which(sok == 1 & (pomidorowy == 1 | z_marchwi == 1))
+
+wszystko$Nazwa[idx_soki_warzywne_i_owocowo_warzywne]
+
+srednie[86] <- mean(wszystko$Cena[idx_soki_warzywne_i_owocowo_warzywne])
+
+wariancje[86] <- var(wszystko$Cena[idx_soki_warzywne_i_owocowo_warzywne])
+
+
+
+kat_sr_war <- data.frame("Nazwa" = nazwy_kategorii, "Srednia" = srednie, "Wariancja" = wariancje)
+
+# colnames(dane) <- c("", nazwy_kategorii)
+
+# View(kat_sr_war)
+
+# To bylo przy 1-szym tworzeniu tego pliku ze srednimi, teraz po prostu dorzucam nowy wiersz z nowa data, z nowymi srednimi dla tej daty.
+# do_pliku <- data.frame("Nazwa" = nazwy_kategorii, "Identyfikator" = identyfikatory, "Średnia" = srednie)
+# t_do_pliku <- t(do_pliku)
+# dane <- matrix(NA, nrow = 3, ncol = 87)
+# dane[, 2:87] <- t_do_pliku
+# dane[3, 1] <- as.character(Sys.Date())
+# dane <- data.frame(dane)
+# write.xlsx(dane, paste0(getwd(), "/Dlahandlu_Kategorie_z_", Sys.Date(), ".xlsx"))
+# save.image(paste0(getwd(), "/Dlahandlu_Kategorie_z_", Sys.Date(), ".RData"))
+
+if(dane[nrow(dane), 1] == Sys.Date() - dni_przed)
+{
+  dane[nrow(dane) + 1, ] <- c(as.character(Sys.Date()), kat_sr_war$Srednia)
+  for(i in 2:ncol(dane)){dane[, i] <- as.double(dane[,i])}
+  write.xlsx(dane, paste0(getwd(), "/Dlahandlu_Kategorie_z_", Sys.Date(), ".xlsx"))
+  save.image(paste0(getwd(), "/Dlahandlu_Kategorie_z_", Sys.Date(), ".RData"))
+  write.xlsx(wszystko, paste0(getwd(), "/Dlahandlu_", Sys.Date(), ".xlsx"))
+  write.xlsx(wszystko, paste0("W:/Osobiste/Kuba_Z/Scrapping/Żywność (do zczytania)/Zczytaj wszystkie żywności z dzisiaj/Dlahandlu_", Sys.Date(), ".xlsx"))
+  write.xlsx(dane, paste0("W:/Osobiste/Kuba_Z/Scrapping/Żywność (do zczytania)/Szeregi czasowe/Dlahandlu_Kategorie_z_", Sys.Date(), ".xlsx"))
+  write.xlsx(dane, paste0("W:/Osobiste/Kuba_Z/Scrapping/Żywność (do zczytania)/Szeregi czasowe/Dlahandlu_Kategorie.xlsx"))
+}
