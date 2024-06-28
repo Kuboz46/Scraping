@@ -1,0 +1,286 @@
+rm(list = ls())
+
+library(rvest)
+library(dplyr)
+library(openxlsx)
+
+
+
+
+
+
+
+
+link <- read_html("https://energobielsk.pl/sklep/")
+
+
+
+
+# Kiedys tak dzialalo, 13 grudnia musialem podmienic.
+# ceny_stare <- link %>% html_elements(".stara-cena") %>% html_text2()
+
+# ceny_stare <- link %>% html_elements(".price") %>% html_text2()
+
+# ceny_stare <- gsub(",", ".", ceny_stare)
+
+# ceny_stare <- gsub("zł", "", ceny_stare)
+
+# ceny_stare <- as.double(ceny_stare) 
+
+# ceny <- rep(0, length(ceny_stare))
+
+# ceny_nowe_i_stare <- link %>% html_elements(".price") %>% html_text2()
+
+# ceny_nowe_i_stare <- gsub(",", ".", ceny_nowe_i_stare)
+
+# ceny_nowe_i_stare <- gsub("zł", "", ceny_nowe_i_stare)
+
+# ceny_nowe_i_stare <- as.double(ceny_nowe_i_stare)
+
+# for(i in 1:length(ceny))
+# {
+#   if(is.na(ceny_stare[i]))
+#   {
+#     ceny[i] <- ceny_nowe_i_stare[i]
+#   }
+#   else
+#   {
+#     ceny[i] <- ceny_stare[i]
+#   }
+# }
+
+
+
+
+
+
+# Do 22 marca wlacznie czytanie cen
+
+# ceny <- link %>% html_elements(".price") %>% html_text2()
+
+# ceny <- gsub(",", ".", ceny)
+
+# ceny <- gsub("zł", "", ceny)
+
+# ceny <- gsub("brutto", "", ceny)
+
+# To ponisza linijke musialem dopisac 21 grudnia.
+# ceny <- gsub("/tona", "", ceny)
+
+# ceny <- as.double(ceny)
+
+
+# Od 27 marca czytanie cen
+
+ceny_zczytane <- link %>% html_elements(".price") %>% html_text2()
+ceny_zczytane <- gsub(",", ".", ceny_zczytane)
+ceny_zczytane <- gsub("zł", "", ceny_zczytane)
+ceny_zczytane <- gsub("brutto", "", ceny_zczytane)
+ceny_zczytane <- gsub("/tona", "", ceny_zczytane)
+
+ceny <- rep(NA, length(ceny_zczytane))
+
+
+for(i in 1:length(ceny))
+{
+  regm_ceny <- regmatches(ceny_zczytane, gregexpr("[[:digit:]]+", ceny_zczytane))[[i]]
+  ceny[i] <- paste0(regm_ceny[1], ".", regm_ceny[2])
+  ceny[i] <- as.double(ceny[i])
+}
+
+
+
+
+
+
+
+
+
+
+
+# Czytanie nazw nadal bez zmian
+
+nazwy <- link %>% html_elements(".woocommerce-loop-product__title") %>% html_text2()
+
+
+
+
+energobielsk_ceny <- data.frame(Nazwa = nazwy, Cena = ceny)
+
+write.xlsx(energobielsk_ceny, paste0(getwd(), "/energobielsk_", Sys.Date(), ".xlsx"))
+
+# energobielsk_ceny <- read.xlsx(paste0(getwd(), "/energobielsk_", "2022-10-24", ".xlsx"))
+# srednie <- data.frame(Data = "2022-10-24", "Średnia" = mean(energobielsk_ceny$Cena, na.rm = T))
+# write.xlsx(srednie, paste0(getwd(), "/energobielsk_srednie_", "2022-10-24", ".xlsx"))
+
+
+
+
+
+
+
+
+srednie <- read.xlsx(paste0(getwd(), "/energobielsk_srednie.xlsx"))
+
+
+
+dane <- energobielsk_ceny
+
+
+
+
+
+# srednie <- data.frame(Data = "2022-10-24", "Wszystko" = mean(dane$Cena, na.rm = T),
+#                       "Drewno" = srednia_drewno, "Ekogroszek" = srednia_ekogroszek, "Groszek" = srednia_groszek, 
+#                       "Koks" = srednia_koks, "Orzech" = srednia_orzech, "Pellet" = srednia_pellet, 
+#                       "Węgiel" = srednia_wegiel, "Miał" = srednia_mial)
+
+
+
+
+
+
+
+
+
+
+
+dane$Nazwa <- toupper(dane$Nazwa)
+
+dane$Cena <- as.double(dane$Cena)
+
+
+
+
+
+
+drewno <- grepl("DREWNO", dane$Nazwa, fixed = TRUE)
+
+idx_drewno <- which(drewno == 1)
+
+dane$Nazwa[idx_drewno]
+
+srednia_drewno <- mean(dane$Cena[idx_drewno], na.rm = T)
+
+
+
+
+
+
+ekogroszek <- grepl("EKOGROSZEK", dane$Nazwa, fixed = TRUE)
+
+idx_ekogroszek <- which(ekogroszek == 1)
+
+dane$Nazwa[idx_ekogroszek]
+
+srednia_ekogroszek <- mean(dane$Cena[idx_ekogroszek], na.rm = T)
+
+
+
+
+
+
+
+
+groszek <- grepl("GROSZEK", dane$Nazwa, fixed = TRUE)
+
+idx_groszek <- which(groszek == 1)
+
+dane$Nazwa[idx_groszek]
+
+srednia_groszek <- mean(dane$Cena[idx_groszek], na.rm = T)
+
+
+
+
+
+
+
+koks <- grepl("KOKS", dane$Nazwa, fixed = TRUE)
+
+idx_koks <- which(koks == 1)
+
+dane$Nazwa[idx_koks]
+
+srednia_koks <- mean(dane$Cena[idx_koks], na.rm = T)
+
+
+
+
+
+
+orzech <- grepl("ORZECH", dane$Nazwa, fixed = TRUE)
+
+idx_orzech <- which(orzech == 1)
+
+dane$Nazwa[idx_orzech]
+
+srednia_orzech <- mean(dane$Cena[idx_orzech], na.rm = T)
+
+
+
+
+
+
+
+pellet <- grepl("PELLET", dane$Nazwa, fixed = TRUE)
+
+idx_pellet <- which(pellet == 1)
+
+dane$Nazwa[idx_pellet]
+
+srednia_pellet <- mean(dane$Cena[idx_pellet], na.rm = T)
+
+
+
+
+
+
+
+idx_wegiel <- which(ekogroszek == 1 | groszek == 1 | orzech == 1)
+
+dane$Nazwa[idx_wegiel]
+
+srednia_wegiel <- mean(dane$Cena[idx_wegiel], na.rm = T)
+
+
+
+
+
+
+
+
+
+mial <- grepl("MIAŁ", dane$Nazwa, fixed = TRUE)
+
+idx_mial <- which(mial == 1)
+
+dane$Nazwa[idx_mial]
+
+srednia_mial <- mean(dane$Cena[idx_mial], na.rm = T)
+
+
+
+
+
+
+
+
+
+
+srednie[nrow(srednie) + 1, ] <- c(as.character(Sys.Date()), mean(dane$Cena, na.rm = T), srednia_drewno, srednia_ekogroszek,
+                                  srednia_groszek, srednia_koks, srednia_orzech, srednia_pellet,
+                                  srednia_wegiel, srednia_mial)
+
+
+for(i in 2:ncol(srednie))
+{
+  srednie[, i] <- as.double(srednie[, i])
+}
+
+write.xlsx(srednie, paste0(getwd(), "/energobielsk_srednie_", Sys.Date(), ".xlsx"))
+write.xlsx(srednie, paste0(getwd(), "/energobielsk_srednie.xlsx"))
+
+write.xlsx(energobielsk_ceny, paste0("W:/Osobiste/Kuba_Z/Scrapping/Scrapping węgiel (do zczytania)/Mix/energobielsk_", Sys.Date(), ".xlsx"))
+write.xlsx(dane, paste0("W:/Osobiste/Kuba_Z/Scrapping/Scrapping węgiel (do zczytania)/Szeregi czasowe/energobielsk_srednie_", Sys.Date(), ".xlsx"))
+write.xlsx(dane, paste0("W:/Osobiste/Kuba_Z/Scrapping/Scrapping węgiel (do zczytania)/Szeregi czasowe/energobielsk_srednie.xlsx"))
