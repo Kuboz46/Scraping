@@ -1,0 +1,257 @@
+rm(list = ls())
+
+library(rvest)
+library(dplyr)
+library(openxlsx)
+
+
+
+
+adres <- "https://polskiwegiel.com/12-oferta"
+
+polski_wegiel_ceny <- data.frame()
+
+link <- read_html(adres)
+
+print("Wczytaną 1 stronę.")
+
+ceny <- link %>% html_elements(".price") %>% html_text2()
+
+ceny <- gsub(" ", "", ceny)
+
+ceny <- gsub("zł", "", ceny)
+
+ceny <- gsub(",", ".", ceny)
+
+ceny <- as.double(ceny)
+
+nazwy <- link %>% html_elements(".product-title") %>% html_text2()
+
+polski_wegiel_ceny <- rbind(polski_wegiel_ceny, data.frame(Nazwa = nazwy, Cena = ceny))
+
+for(i in 1:1000)
+{
+  adres_nowy <- paste0(adres, "?page=", i + 1)
+  
+  link <- read_html(adres_nowy)
+  
+  print(paste0("Wczytano stronę ", i + 1, "."))
+  
+  ceny <- link %>% html_elements(".price") %>% html_text2()
+  
+  ceny <- gsub(" ", "", ceny)
+  
+  ceny <- gsub("zł", "", ceny)
+  
+  ceny <- gsub(",", ".", ceny)
+  
+  ceny <- as.double(ceny)
+  
+  if(length(ceny) == 0)
+  {
+    print("Tu już nie ma cen.")
+    break;
+  }
+  
+  nazwy <- link %>% html_elements(".product-title") %>% html_text2()
+  
+  polski_wegiel_ceny <- rbind(polski_wegiel_ceny, data.frame(Nazwa = nazwy, Cena = ceny))
+}
+
+
+
+
+
+
+write.xlsx(polski_wegiel_ceny, paste0(getwd(), "/Polski_Wegiel_", Sys.Date(), ".xlsx"))
+save.image(paste0(getwd(), "/Polski_Wegiel_", Sys.Date(), ".RData"))
+
+
+
+
+
+
+# polski_wegiel_ceny <- read.xlsx(paste0(getwd(), "/Polski_Wegiel_", "2022-10-24", ".xlsx"))
+# srednie <- data.frame(Data = "2022-10-24", "Średnia" = mean(polski_wegiel_ceny$Cena, na.rm = T))
+# write.xlsx(srednie, paste0(getwd(), "/Polski_Wegiel_srednie_", "2022-10-24", ".xlsx"))
+
+
+
+
+srednie <- read.xlsx(paste0(getwd(), "/Polski_Wegiel_srednie.xlsx"))
+
+
+
+
+
+
+dane <- polski_wegiel_ceny
+
+
+
+
+
+
+
+
+
+
+
+
+# srednie <- data.frame(Data = "2022-10-24", "Wszystko" = mean(dane$Cena, na.rm = T),
+#                       "Drewno" = srednia_drewno, "Ekogroszek" = srednia_ekogroszek, "Groszek" = srednia_groszek, 
+#                       "Koks" = srednia_koks, "Orzech" = srednia_orzech, "Pellet" = srednia_pellet, 
+#                       "Węgiel" = srednia_wegiel, "Miał" = srednia_mial)
+
+
+
+
+dane$Nazwa <- toupper(dane$Nazwa)
+
+dane$Cena <- as.double(dane$Cena)
+
+
+
+
+
+
+drewno <- grepl("DREWNO", dane$Nazwa, fixed = TRUE)
+
+idx_drewno <- which(drewno == 1)
+
+dane$Nazwa[idx_drewno]
+
+srednia_drewno <- mean(dane$Cena[idx_drewno], na.rm = T)
+
+
+
+
+
+
+ekogroszek <- grepl("EKOGROSZEK", dane$Nazwa, fixed = TRUE)
+
+idx_ekogroszek <- which(ekogroszek == 1)
+
+dane$Nazwa[idx_ekogroszek]
+
+srednia_ekogroszek <- mean(dane$Cena[idx_ekogroszek], na.rm = T)
+
+
+
+
+
+
+
+
+groszek <- grepl("GROSZEK", dane$Nazwa, fixed = TRUE)
+
+idx_groszek <- which(groszek == 1)
+
+dane$Nazwa[idx_groszek]
+
+srednia_groszek <- mean(dane$Cena[idx_groszek], na.rm = T)
+
+
+
+
+
+
+
+koks <- grepl("KOKS", dane$Nazwa, fixed = TRUE)
+
+idx_koks <- which(koks == 1)
+
+dane$Nazwa[idx_koks]
+
+srednia_koks <- mean(dane$Cena[idx_koks], na.rm = T)
+
+
+
+
+
+
+orzech <- grepl("ORZECH", dane$Nazwa, fixed = TRUE)
+
+idx_orzech <- which(orzech == 1)
+
+dane$Nazwa[idx_orzech]
+
+srednia_orzech <- mean(dane$Cena[idx_orzech], na.rm = T)
+
+
+
+
+
+
+
+pellet <- grepl("PELLET", dane$Nazwa, fixed = TRUE)
+
+idx_pellet <- which(pellet == 1)
+
+dane$Nazwa[idx_pellet]
+
+srednia_pellet <- mean(dane$Cena[idx_pellet], na.rm = T)
+
+
+
+
+
+
+
+
+idx_wegiel <- which(ekogroszek == 1 | groszek == 1 | orzech == 1)
+
+dane$Nazwa[idx_wegiel]
+
+srednia_wegiel <- mean(dane$Cena[idx_wegiel], na.rm = T)
+
+
+
+
+
+
+
+
+
+mial <- grepl("MIAŁ", dane$Nazwa, fixed = TRUE)
+
+idx_mial <- which(mial == 1)
+
+dane$Nazwa[idx_mial]
+
+srednia_mial <- mean(dane$Cena[idx_mial], na.rm = T)
+
+
+
+
+
+
+
+
+
+
+srednie[nrow(srednie) + 1, ] <- c(as.character(Sys.Date()), mean(dane$Cena, na.rm = T), srednia_drewno, srednia_ekogroszek,
+                                  srednia_groszek, srednia_koks, srednia_orzech, srednia_pellet,
+                                  srednia_wegiel, srednia_mial)
+
+
+for(i in 2:ncol(srednie))
+{
+  srednie[, i] <- as.double(srednie[, i])
+}
+
+
+
+
+
+
+
+
+
+
+write.xlsx(srednie, paste0(getwd(), "/Polski_Wegiel_srednie_", Sys.Date(), ".xlsx"))
+write.xlsx(srednie, paste0(getwd(), "/Polski_Wegiel_srednie.xlsx"))
+
+write.xlsx(polski_wegiel_ceny, paste0("W:/Osobiste/Kuba_Z/Scrapping/Scrapping węgiel (do zczytania)/Mix/Polski_Wegiel_", Sys.Date(), ".xlsx"))
+write.xlsx(dane, paste0("W:/Osobiste/Kuba_Z/Scrapping/Scrapping węgiel (do zczytania)/Szeregi czasowe/Polski_Wegiel_srednie_", Sys.Date(), ".xlsx"))
+write.xlsx(dane, paste0("W:/Osobiste/Kuba_Z/Scrapping/Scrapping węgiel (do zczytania)/Szeregi czasowe/Polski_Wegiel_srednie.xlsx"))
