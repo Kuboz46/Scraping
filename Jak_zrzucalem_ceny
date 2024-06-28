@@ -1,0 +1,43 @@
+Ceny zrzuca się co 3 dni robocze (ostatnie zczytywanie przez Kubę było w czwartek 27.06.2024 r.).
+
+
+Ważne są tylko foldery kończące się na "(do zczytania)", czyli kategorie:
+1) Farmaceutyki,
+2) Kosmetyki,
+3) Meble i inne rzeczy domowe,
+4) Obuwie,
+5) Odzież,
+6) RTV/AGD,
+7) Scrapping węgiel,
+8) Żywność.
+
+W każdym z folderów podane są w pliku tekstowym "Sklepy do zczytywania.txt", nazwy sklepów, dla których zrzucam ceny produktów. 
+
+Uruchamia się kod w R dla każdego sklepu (plik Zczytaj_ceny_i_uloz_w_kategorie.R) i mixu wszystkich sklepów.
+
+Są 2 bloki kodu (patrz na komentarze I blok i II blok). Dla żywności i węgla uruchamiamy cały kod (tam nie ma podziału na 2 bloki), ponieważ tam prawie zawsze zczytuje się od razu, rzadko zrywa, tam bardzo szybko ceny się ściągają. Nawet jak zerwie, to można wejść w adres i potem, jak się znowu odpali, to już pójdzie. Tam nie czeka się kilkanaście minut jak przy sklepach, gdzie długo się zczytują. Nawet można wcisnąć Ctrl + Shift + S (kombinacja do uruchomienia całego kodu), to po chwili się zczyta.
+W przypadku mixu kod nie jest podzielony na bloki, można go odpalić cały na raz, ponieważ tutaj tylko przyporządkowujemy produkty do kategorii inflacyjnych (nie ma ryzyka, że zerwie połączenie).
+
+I)	Kod od początku do komentarza II blok (w R można znaleźć, wpisując II blok po kliknięciu ikonki lupy, jak na zdjęciu niżej). 
+
+ 
+
+W tym bloku wczytywany jest ostatni szereg czasowy (wszystkie dane z wyłączeniem bieżącego dnia), następnie program spisuje każdą nazwę produktu z odpowiadającą ceną produktu z każdej podstrony internetowej. 
+Trzeba pilnować, czy nie pojawia się error (czasem zrywa połączenie). Jeżeli zerwie łączność (jak w poniższym obrazku)
+ 
+
+, to w konsoli uruchomić kod: paste0(adres, "?page=", i), potem uruchomić w przeglądarce otrzymany link na konsoli i następnie uruchomić pętlę od zmiennej i równej numerowi strony dla której przerwano zczytywanie (można sprawdzić w konsoli wartość zmiennej i) 
+ 
+
+Po zczytaniu wszystkich podstron (w przypadku, gdy zerwało się połączenie), należy uruchomić pętlę for(adres in zbior_adresow) {…} dla zbioru adresów z wyłączeniem adresów, dla których zczytano dane (adres, do którego wczytano produkty, można sprawdzić, wpisując na konsolę adres).
+
+ 
+
+Po wczytaniu wszystkich adresów uruchamiamy blok kodu.
+
+II)	Od komentarza II blok do końca skryptu, uruchamiamy kod, tutaj program przyporządkowuje każdy produkt do odpowiedniej kategorii inflacyjnej.
+
+
+
+Miejsce zapisywania wyników
+Wyniki są zapisywane w pliku .xlsx, gdzie przechowywane są szeregi czasowe dla każdej kategorii (folder Szeregi czasowe).
