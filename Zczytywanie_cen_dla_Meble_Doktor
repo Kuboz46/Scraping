@@ -1,0 +1,706 @@
+# I blok
+
+rm(list = ls())
+
+library(lubridate)
+dz_tyg <- wday(Sys.Date(), week_start=1)
+if(dz_tyg %in% 1:3)
+{
+  dni_przed <- 5
+}
+if(dz_tyg %in% 4:5)
+{
+  dni_przed <- 3
+}
+
+load(paste0(getwd(), "/meble_doktor_Kategorie_z_", Sys.Date() - dni_przed, ".RData"))
+
+dz_tyg <- wday(Sys.Date(), week_start=1)
+if(dz_tyg %in% 1:3)
+{
+  dni_przed <- 5
+}
+if(dz_tyg %in% 4:5)
+{
+  dni_przed <- 3
+}
+
+# Zczytywanie cen
+
+library(rvest)
+library(dplyr)
+library(openxlsx)
+
+meble_doktor_ceny <- data.frame()
+
+zbior_adresow <- c(
+  "https://mebledoktor24.pl/53-meble",
+  "https://mebledoktor24.pl/10-sypialnia",
+  "https://mebledoktor24.pl/11-salon",
+  "https://mebledoktor24.pl/12-jadalnia",
+  "https://mebledoktor24.pl/13-pokoj-dzieciecymlodziezowy",
+  "https://mebledoktor24.pl/80-ogrod-i-taras"
+)                   
+
+for(adres in zbior_adresow)
+{
+  link <- read_html(adres)
+  
+  print(adres)
+  
+  print("Strona 1")
+  
+  ceny_zczytane <- link %>% html_elements(".product-price-and-shipping") %>% html_text2()
+  
+  ceny_zczytane <- gsub(" ", "", ceny_zczytane)
+  
+  ceny_zczytane <- regmatches(ceny_zczytane, gregexpr("[[:digit:]]+", ceny_zczytane))
+  
+  ceny <- rep(NA, length(ceny_zczytane))
+  
+  for(i in 1:length(ceny))
+  {
+    ceny[i] <- as.double(paste0(ceny_zczytane[[i]][1], ".", ceny_zczytane[[i]][2]))
+  }
+  
+  nazwy <- link %>% html_elements(".product-title") %>% html_text2()
+  
+  meble_doktor_ceny <- rbind(meble_doktor_ceny, data.frame(Nazwa = nazwy, Cena = ceny))
+  
+  print(paste0("Zczytano łącznie ", nrow(meble_doktor_ceny), " cen produktów."))
+  
+  nr_strony <- link %>% html_elements(".text-xs-center") %>% html_text2()
+  
+#  nr_strony <- nr_strony[3]
+  # 1 czerwca 2023: W tej linijce trzeba bylo podmienic liczbe.
+  nr_strony <- nr_strony[2]
+  
+  nr_strony <- regmatches(nr_strony, gregexpr("[[:digit:]]+", nr_strony))
+  
+  nr_strony <- nr_strony[[1]]
+  
+  nr_strony <- as.integer(nr_strony[length(nr_strony)])
+  
+  print(paste0("Jest ", nr_strony, " stron."))
+  
+  if(length(nr_strony) > 0)
+  {
+    if(nr_strony > 1)
+    {
+      for(i in 2:nr_strony)
+      {
+        link <- read_html(paste0(adres, "?page=", i))
+        
+        print(paste0("Strona ", i))
+        
+        ceny_zczytane <- link %>% html_elements(".product-price-and-shipping") %>% html_text2()
+        
+        ceny_zczytane <- gsub(" ", "", ceny_zczytane)
+        
+        ceny_zczytane <- regmatches(ceny_zczytane, gregexpr("[[:digit:]]+", ceny_zczytane))
+        
+        ceny <- rep(NA, length(ceny_zczytane))
+        
+        for(i in 1:length(ceny))
+        {
+          ceny[i] <- as.double(paste0(ceny_zczytane[[i]][1], ".", ceny_zczytane[[i]][2]))
+        }
+        
+        nazwy <- link %>% html_elements(".product-title") %>% html_text2()
+        
+        meble_doktor_ceny <- rbind(meble_doktor_ceny, data.frame(Nazwa = nazwy, Cena = ceny))
+        
+        print(paste0("Zczytano łącznie ", nrow(meble_doktor_ceny), " cen produktów."))
+      }
+    }
+  }
+}
+
+wsz_meble_doktor_ceny <- meble_doktor_ceny
+meble_doktor_ceny <- unique(meble_doktor_ceny)
+
+write.xlsx(meble_doktor_ceny, paste0(getwd(), "/meble_doktor_", Sys.Date(), ".xlsx"))
+save.image(paste0(getwd(), "/meble_doktor_", Sys.Date(), ".RData"))
+write.xlsx(meble_doktor_ceny, paste0("W:/Osobiste/Kuba_Z/Scrapping/Meble i inne rzeczy domowe (do zczytania)/Wszystkie meble/meble_doktor_", Sys.Date(), ".xlsx"))
+write.xlsx(meble_doktor_ceny, paste0("W:/Osobiste/Kuba_Z/Scrapping/Meble i inne rzeczy domowe (do zczytania)/Wszystkie meble z mint grey/meble_doktor_", Sys.Date(), ".xlsx"))
+
+
+
+
+
+
+
+# II blok
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+wszystko <- meble_doktor_ceny
+
+nrow(wszystko)
+nrow(unique(wszystko))
+
+wszystko <- unique(wszystko)
+
+wszystko$Nazwa <- toupper(wszystko$Nazwa)
+
+wszystko$Cena <- as.double(wszystko$Cena)
+
+srednie <- rep(0, 9)
+wariancje <- rep(0, 9)
+nazwy_kategorii <- rep("", 9)
+identyfikatory <- rep("", 9)
+
+
+
+
+
+
+
+
+# 1. (indeks: 326, wiersz: 144) Meble do mieszkania lub domu
+
+biurko <- grepl("BIURKO", wszystko$Nazwa, fixed = TRUE)
+szafa <- grepl("SZAFA", wszystko$Nazwa, fixed = TRUE)
+szafka <- grepl("SZAFKA", wszystko$Nazwa, fixed = TRUE)
+komoda <- grepl("KOMODA", wszystko$Nazwa, fixed = TRUE)
+regal <- grepl("REGAŁ", wszystko$Nazwa, fixed = TRUE)
+polka <- grepl("PÓŁKA", wszystko$Nazwa, fixed = TRUE)
+krzeslo <- grepl("KRZESŁO", wszystko$Nazwa, fixed = TRUE)
+stol <- grepl("STÓŁ", wszystko$Nazwa, fixed = TRUE)
+stolik <- grepl("STOLIK", wszystko$Nazwa, fixed = TRUE)
+lozko <- grepl("ŁÓŻKO", wszystko$Nazwa, fixed = TRUE)
+drzwi <- grepl("DRZWI", wszystko$Nazwa, fixed = TRUE)
+tapczan <- grepl("TAPCZAN", wszystko$Nazwa, fixed = TRUE)
+fotel <- grepl("FOTEL", wszystko$Nazwa, fixed = TRUE)
+lezak <- grepl("LEŻAK", wszystko$Nazwa, fixed = TRUE)
+sofa <- grepl("SOFA", wszystko$Nazwa, fixed = TRUE)
+pufa <- grepl("PUFA", wszystko$Nazwa, fixed = TRUE)
+wersalka <- grepl("WERSALKA", wszystko$Nazwa, fixed = TRUE)
+
+
+
+
+
+
+idx_meble_do_mieszkania_lub_domu <- which(biurko == 1 | szafa == 1 | szafka == 1 | komoda == 1 | regal == 1 | polka == 1 | krzeslo == 1 |
+                                            stol == 1 | stolik == 1 | lozko == 1 | drzwi == 1 | tapczan == 1 | fotel == 1 | lezak == 1 |
+                                            sofa == 1 | pufa == 1 | wersalka == 1)
+
+
+
+
+# wszystko$Nazwa[idx_meble_do_mieszkania_lub_domu]
+
+
+
+srednie[1] <- mean(wszystko$Cena[idx_meble_do_mieszkania_lub_domu])
+
+
+
+wariancje[1] <- var(wszystko$Cena[idx_meble_do_mieszkania_lub_domu])
+
+
+
+nazwy_kategorii[1] <- "Meble do mieszkania lub domu"
+identyfikatory[1] <- "326"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 2. (indeks: 327, wiersz: 145) Meble ogrodowe
+
+stolik <- grepl("STOLIK", wszystko$Nazwa, fixed = TRUE)
+stol <- grepl("STÓŁ", wszystko$Nazwa, fixed = TRUE)
+krzeslo <- grepl("KRZESŁO", wszystko$Nazwa, fixed = TRUE)
+fotel <- grepl("FOTEL", wszystko$Nazwa, fixed = TRUE)
+lezak <- grepl("LEŻAK", wszystko$Nazwa, fixed = TRUE)
+ogrodowa <- grepl("OGRODOWA", wszystko$Nazwa, fixed = TRUE)
+ogrodowy <- grepl("OGRODOWY", wszystko$Nazwa, fixed = TRUE)
+ogrodowe <- grepl("OGRODOWE", wszystko$Nazwa, fixed = TRUE)
+
+
+
+
+
+
+idx_meble_ogrodowe <- which((stolik == 1 & ogrodowy == 1) | (stol == 1 & ogrodowy == 1) | (krzeslo == 1 & ogrodowe == 1) |
+                              (fotel == 1 & ogrodowy == 1) | (lezak == 1 & ogrodowy == 1))
+
+
+
+
+# wszystko$Nazwa[idx_meble_ogrodowe]
+
+
+
+srednie[2] <- mean(wszystko$Cena[idx_meble_ogrodowe])
+
+
+
+wariancje[2] <- var(wszystko$Cena[idx_meble_ogrodowe])
+
+
+
+nazwy_kategorii[2] <- "Meble ogrodowe"
+identyfikatory[2] <- "327"
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 3. (indeks: 328, wiersz: 146) Sprzet oswietleniowy
+
+lampa <- grepl("LAMPA", wszystko$Nazwa, fixed = TRUE)
+zyrandol <- grepl("ŻYRANDOL", wszystko$Nazwa, fixed = TRUE)
+kinkiet <- grepl("KINKIET", wszystko$Nazwa, fixed = TRUE)
+spot <- grepl("SPOT", wszystko$Nazwa, fixed = TRUE)
+reflektorka <- grepl("REFLEKTORKA", wszystko$Nazwa, fixed = TRUE)
+
+
+
+
+
+
+idx_sprzet_oswietleniowy <- which(lampa == 1 | zyrandol == 1 | kinkiet == 1 | spot == 1 | reflektorka == 1)
+
+
+
+
+# wszystko$Nazwa[idx_sprzet_oswietleniowy]
+
+
+
+srednie[3] <- mean(wszystko$Cena[idx_sprzet_oswietleniowy])
+
+
+
+wariancje[3] <- var(wszystko$Cena[idx_sprzet_oswietleniowy])
+
+
+
+nazwy_kategorii[3] <- "Sprzęt oświetleniowy"
+identyfikatory[3] <- "328"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 4. (indeks: 329, wiersz: 147) Pozostale meble i artykuly dekoracyjne
+
+donica <- grepl("DONICA", wszystko$Nazwa, fixed = TRUE)
+patera <- grepl("PATERA", wszystko$Nazwa, fixed = TRUE)
+misa <- grepl("MISA", wszystko$Nazwa, fixed = TRUE)
+talerzyk_dekoracyjny <- grepl("TALERZYK DEKORACYJNY", wszystko$Nazwa, fixed = TRUE)
+ramka <- grepl("RAMKA", wszystko$Nazwa, fixed = TRUE)
+swieca <- grepl("ŚWIECA", wszystko$Nazwa, fixed = TRUE)
+swiecznik <- grepl("ŚWIECZNIK", wszystko$Nazwa, fixed = TRUE)
+lampion <- grepl("LAMPION", wszystko$Nazwa, fixed = TRUE)
+lustro <- grepl("LUSTRO", wszystko$Nazwa, fixed = TRUE)
+naklejka <- grepl("NAKLEJKA", wszystko$Nazwa, fixed = TRUE)
+wazon <- grepl("WAZON", wszystko$Nazwa, fixed = TRUE)
+obraz <- grepl("OBRAZ", wszystko$Nazwa, fixed = TRUE)
+figurka <- grepl("FIGURKA", wszystko$Nazwa, fixed = TRUE)
+wianek <- grepl("WIANEK", wszystko$Nazwa, fixed = TRUE)
+muszle_dekoracyjne <- grepl("MUSZLE DEKORACYJNE", wszystko$Nazwa, fixed = TRUE)
+wianek <- grepl("WIANEK", wszystko$Nazwa, fixed = TRUE)
+granulat <- grepl("GRANULAT", wszystko$Nazwa, fixed = TRUE)
+kamyki <- grepl("KAMYKI", wszystko$Nazwa, fixed = TRUE)
+szkatulka <- grepl("SZKATUŁKA", wszystko$Nazwa, fixed = TRUE)
+
+
+
+
+
+
+idx_pozostale_meble_i_artykuly_dekoracyjne <- which(donica == 1 | patera == 1 | misa == 1 | talerzyk_dekoracyjny == 1 | ramka == 1 |
+                                                      swieca == 1 | swiecznik == 1 | lampion == 1 | lustro == 1 | naklejka == 1 |
+                                                      wazon == 1 | obraz == 1 | figurka == 1 | wianek == 1 | muszle_dekoracyjne == 1 |
+                                                      wianek == 1 | granulat == 1 | kamyki == 1 | szkatulka == 1)
+
+
+
+
+# wszystko$Nazwa[idx_pozostale_meble_i_artykuly_dekoracyjne]
+
+
+
+srednie[4] <- mean(wszystko$Cena[idx_pozostale_meble_i_artykuly_dekoracyjne])
+
+
+
+wariancje[4] <- var(wszystko$Cena[idx_pozostale_meble_i_artykuly_dekoracyjne])
+
+
+
+nazwy_kategorii[4] <- "Pozostałe meble i artykuły dekoracyjne"
+identyfikatory[4] <- "329"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 5. (indeks: 330, wiersz: 148) Dywany i wykladziny dywanowe
+
+dywan <- grepl("DYWAN", wszystko$Nazwa, fixed = TRUE)
+wykladzina <- grepl("WYKŁADZINA", wszystko$Nazwa, fixed = TRUE)
+wykladziny <- grepl("WYKŁADZINY", wszystko$Nazwa, fixed = TRUE)
+
+
+
+
+
+
+
+idx_dywany_i_wykladziny_dywanowe <- which(dywan == 1 | wykladzina == 1 | wykladziny == 1)
+
+
+
+
+# wszystko$Nazwa[idx_dywany_i_wykladziny_dywanowe]
+
+
+
+srednie[5] <- mean(wszystko$Cena[idx_dywany_i_wykladziny_dywanowe])
+
+
+
+wariancje[5] <- var(wszystko$Cena[idx_dywany_i_wykladziny_dywanowe])
+
+
+
+nazwy_kategorii[5] <- "Dywany i wykładziny dywanowe"
+identyfikatory[5] <- "330"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 6. (indeks: 331, wiersz: 149) Pozostale wykladziny podlogowe
+
+wykladzina <- grepl("WYKŁADZINA", wszystko$Nazwa, fixed = TRUE)
+wykladziny <- grepl("WYKŁADZINY", wszystko$Nazwa, fixed = TRUE)
+korkowa <- grepl("KORKOWA", wszystko$Nazwa, fixed = TRUE)
+korkowe <- grepl("KORKOWE", wszystko$Nazwa, fixed = TRUE)
+linoleum <- grepl("LINOLEUM", wszystko$Nazwa, fixed = TRUE)
+kauczukowa <- grepl("KAUCZUKOWA", wszystko$Nazwa, fixed = TRUE)
+kauczukowe <- grepl("KAUCZUKOWE", wszystko$Nazwa, fixed = TRUE)
+
+
+
+
+
+
+
+idx_pozostale_wykladziny_podlogowe <- which((wykladzina == 1 & korkowa == 1) | (wykladziny == 1 & korkowe == 1) | linoleum == 1 |
+                                              (wykladzina == 1 & kauczukowa == 1) | (wykladziny == 1 & kauczukowe == 1))
+
+
+
+
+# wszystko$Nazwa[idx_pozostale_wykladziny_podlogowe]
+
+
+
+srednie[6] <- mean(wszystko$Cena[idx_pozostale_wykladziny_podlogowe])
+
+
+
+wariancje[6] <- var(wszystko$Cena[idx_pozostale_wykladziny_podlogowe])
+
+
+
+nazwy_kategorii[6] <- "Pozostałe wykładziny podłogowe"
+identyfikatory[6] <- "331"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 7. (indeks: 334, wiersz: 152) Tkaniny tapicerskie i zaslony
+
+tkanina <- grepl("TKANINA", wszystko$Nazwa, fixed = TRUE)
+tkaniny <- grepl("TKANINY", wszystko$Nazwa, fixed = TRUE)
+tapicerska <- grepl("TAPICERSKA", wszystko$Nazwa, fixed = TRUE)
+tapicerskie <- grepl("TAPICERSKIE", wszystko$Nazwa, fixed = TRUE)
+zaslona <- grepl("ZASŁONA", wszystko$Nazwa, fixed = TRUE)
+zaslony <- grepl("ZASŁONY", wszystko$Nazwa, fixed = TRUE)
+
+
+
+
+
+
+
+idx_tkaniny_tapicerskie_i_zaslony <- which((tkanina == 1 & tapicerska == 1) | (tkaniny == 1 & tapicerskie == 1) | zaslona == 1 | zaslony == 1)
+
+
+
+
+# wszystko$Nazwa[idx_tkaniny_tapicerskie_i_zaslony]
+
+
+
+srednie[7] <- mean(wszystko$Cena[idx_tkaniny_tapicerskie_i_zaslony])
+
+
+
+wariancje[7] <- var(wszystko$Cena[idx_tkaniny_tapicerskie_i_zaslony])
+
+
+
+nazwy_kategorii[7] <- "Tkaniny tapicerskie i zasłony"
+identyfikatory[7] <- "334"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 8. (indeks: 335, wiersz: 153) Bielizna poscielowa
+
+poszwa <- grepl("POSZWA ", wszystko$Nazwa, fixed = TRUE)
+poszewka <- grepl("POSZEWKA ", wszystko$Nazwa, fixed = TRUE)
+posciel <- grepl("POŚCIEL ", wszystko$Nazwa, fixed = TRUE)
+poduszka <- grepl("PODUSZKA ", wszystko$Nazwa, fixed = TRUE)
+koldra <- grepl("KOŁDRA ", wszystko$Nazwa, fixed = TRUE)
+
+
+
+
+
+
+
+idx_bielizna_poscielowa <- which(poszwa == 1 | poszewka == 1 | posciel == 1 | poduszka == 1 | koldra == 1)
+
+
+
+
+# wszystko$Nazwa[idx_bielizna_poscielowa]
+
+
+
+srednie[8] <- mean(wszystko$Cena[idx_bielizna_poscielowa])
+
+
+
+wariancje[8] <- var(wszystko$Cena[idx_bielizna_poscielowa])
+
+
+
+nazwy_kategorii[8] <- "Bielizna pościelowa"
+identyfikatory[8] <- "335"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 9. (indeks: 336, wiersz: 154) Bielizna stolowa i bielizna lazienkowa
+
+molton <- grepl("MOLTON", wszystko$Nazwa, fixed = TRUE)
+obrus <- grepl("OBRUS", wszystko$Nazwa, fixed = TRUE)
+napperon <- grepl("NAPPERON", wszystko$Nazwa, fixed = TRUE)
+laufir <- grepl("LAUFIR", wszystko$Nazwa, fixed = TRUE)
+serwety <- grepl("SERWETY", wszystko$Nazwa, fixed = TRUE)
+serweta <- grepl("SERWETA", wszystko$Nazwa, fixed = TRUE)
+plocienne <- grepl("PŁÓCIENNE", wszystko$Nazwa, fixed = TRUE)
+plocienna <- grepl("PŁÓCIENNA", wszystko$Nazwa, fixed = TRUE)
+kelnerskie <- grepl("KELNERSKIE", wszystko$Nazwa, fixed = TRUE)
+kelnerska <- grepl("KELNERSKA", wszystko$Nazwa, fixed = TRUE)
+recznik <- grepl("RĘCZNIK", wszystko$Nazwa, fixed = TRUE)
+dywanik <- grepl("DYWANIK", wszystko$Nazwa, fixed = TRUE)
+lazienkowy <- grepl("ŁAZIENKOWY", wszystko$Nazwa, fixed = TRUE)
+
+
+
+
+
+
+idx_bielizna_stolowa_i_bielizna_lazienkowa <- which(molton == 1 | obrus == 1 | napperon == 1 | laufir == 1 | (serwety == 1 & plocienne == 1) |
+                                                      (serweta == 1 & plocienna == 1) | (serwety == 1 & kelnerskie == 1) |
+                                                      (serweta == 1 & kelnerska == 1) | recznik == 1 | (dywanik == 1 & lazienkowy == 1))
+
+
+
+
+# wszystko$Nazwa[idx_bielizna_stolowa_i_bielizna_lazienkowa]
+
+
+
+srednie[9] <- mean(wszystko$Cena[idx_bielizna_stolowa_i_bielizna_lazienkowa])
+
+
+
+wariancje[9] <- var(wszystko$Cena[idx_bielizna_stolowa_i_bielizna_lazienkowa])
+
+
+
+nazwy_kategorii[9] <- "Bielizna stołowa i bielizna łazienkowa"
+identyfikatory[9] <- "336"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 10. (indeks: 338, wiersz: 156) Pozostale artykuly wlokiennicze dla gospodarstw domowych
+
+# Tu nie mam pojecia, co przypisac do tej kategorii, wiec ta kategorie odpuszcze.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+kat_sr_war <- data.frame("Nazwa" = nazwy_kategorii, "Srednia" = srednie, "Wariancja" = wariancje)
+# View(kat_sr_war)
+
+# To bylo przy 1-szym tworzeniu tego pliku ze srednimi, teraz po prostu dorzucam nowy wiersz z nowa data, z nowymi srednimi dla tej daty.
+# dane <- matrix("", nrow = 2, ncol = 10)
+# dane <- data.frame(dane)
+# colnames(dane) <- c("", nazwy_kategorii)
+# dane[1, 2:10] <- identyfikatory
+# dane[2, 2:10] <- srednie
+# dane[2, 1] <- as.character(Sys.Date())
+# write.xlsx(dane, paste0(getwd(), "/meble_doktor_Kategorie_z_", Sys.Date(), ".xlsx"))
+# save.image(paste0(getwd(), "/meble_doktor_Kategorie_z_", Sys.Date(), ".RData"))
+
+if(dane[nrow(dane), 1] == Sys.Date() - dni_przed)
+{
+  dane[nrow(dane) + 1, ] <- c(as.character(Sys.Date()), kat_sr_war$Srednia)
+  for(i in 2:ncol(dane)){dane[, i] <- as.double(dane[,i])}
+  write.xlsx(dane, paste0(getwd(), "/meble_doktor_Kategorie_z_", Sys.Date(), ".xlsx"))
+  save.image(paste0(getwd(), "/meble_doktor_Kategorie_z_", Sys.Date(), ".RData"))
+  write.xlsx(wszystko, paste0(getwd(), "/meble_doktor_", Sys.Date(), ".xlsx"))
+  write.xlsx(dane, paste0("W:/Osobiste/Kuba_Z/Scrapping/Meble i inne rzeczy domowe (do zczytania)/Szeregi czasowe/meble_doktor_Kategorie_z_", Sys.Date(), ".xlsx"))
+  write.xlsx(dane, paste0("W:/Osobiste/Kuba_Z/Scrapping/Meble i inne rzeczy domowe (do zczytania)/Szeregi czasowe/meble_doktor_Kategorie.xlsx"))
+}
