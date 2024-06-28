@@ -1,0 +1,270 @@
+rm(list = ls())
+
+library(rvest)
+library(dplyr)
+library(openxlsx)
+
+
+
+weglobud_ceny <- data.frame()
+
+zbior_adresow <- c(
+  "https://www.wegiel24.info/ekogroszek-workowany/",
+  "https://www.wegiel24.info/ekogroszek-luzem/",
+  "https://www.wegiel24.info/orzech-workowany/",
+  "https://www.wegiel24.info/orzech-luzem/"
+)
+
+for(adres in zbior_adresow)
+{
+
+link <- read_html(adres)
+
+ceny_zczytane <- link %>% html_elements(".price") %>% html_text2()
+
+ceny <- rep(0, length(ceny_zczytane))
+
+ceny_zczytane <- regmatches(ceny_zczytane, gregexpr("[[:digit:]]+", ceny_zczytane))
+
+for(i in 1:length(ceny))
+{
+  ceny[i] <- as.double(paste0(ceny_zczytane[[i]][1], ceny_zczytane[[i]][2], ".", ceny_zczytane[[i]][3])) 
+}
+
+#ceny_zczytane <- gsub(",", ".", ceny_zczytane)
+
+#ceny_zczytane <- gsub("zł brutto", "", ceny_zczytane)
+
+#ceny_zczytane <- gsub(" ", "", ceny_zczytane)
+
+#ceny <- as.double(ceny_zczytane)
+
+nazwy <- link %>% html_elements(".woocommerce-loop-product__title") %>% html_text2()
+
+weglobud_ceny <-  rbind(weglobud_ceny, data.frame(Nazwa = nazwy, Cena = ceny))
+
+}
+
+
+
+link <- read_html("https://www.wegiel24.info/ekomial/")
+
+ceny_zczytane <- link %>% html_elements(".price") %>% html_text2()
+
+ceny <- rep(0, length(ceny_zczytane))
+
+ceny_zczytane <- regmatches(ceny_zczytane, gregexpr("[[:digit:]]+", ceny_zczytane))
+
+for(i in 1:length(ceny))
+{
+  ceny[i] <- as.double(paste0(ceny_zczytane[[i]][1], ceny_zczytane[[i]][2], ".", ceny_zczytane[[i]][3])) 
+}
+
+weglobud_ceny <- rbind(weglobud_ceny, data.frame(Nazwa = "Ekomiał", Cena = ceny))
+
+
+
+write.xlsx(weglobud_ceny, paste0(getwd(), "/weglobud_", Sys.Date(), ".xlsx"))
+save.image(paste0(getwd(), "/weglobud_", Sys.Date(), ".RData"))
+
+
+
+
+
+
+# weglobud_ceny <- read.xlsx(paste0(getwd(), "/weglobud_", "2022-10-25", ".xlsx"))
+# srednie <- data.frame(Data = "2022-10-25", "Średnia" = mean(weglobud_ceny$Cena, na.rm = T))
+# write.xlsx(srednie, paste0(getwd(), "/weglobud_srednie_", "2022-10-25", ".xlsx"))
+
+
+
+srednie <- read.xlsx(paste0(getwd(), "/weglobud_srednie.xlsx"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+# srednie <- data.frame(Data = "2022-10-25", "Wszystko" = mean(dane$Cena, na.rm = T),
+#                      "Drewno" = srednia_drewno, "Ekogroszek" = srednia_ekogroszek, "Groszek" = srednia_groszek, 
+#                      "Koks" = srednia_koks, "Orzech" = srednia_orzech, "Pellet" = srednia_pellet, 
+#                      "Węgiel" = srednia_wegiel, "Miał" = srednia_mial)
+
+
+
+
+
+
+dane <- weglobud_ceny
+
+
+
+
+
+
+
+
+
+
+
+
+dane$Nazwa <- toupper(dane$Nazwa)
+
+dane$Cena <- as.double(dane$Cena)
+
+
+
+
+
+
+drewno <- grepl("DREWNO", dane$Nazwa, fixed = TRUE)
+
+idx_drewno <- which(drewno == 1)
+
+dane$Nazwa[idx_drewno]
+
+srednia_drewno <- mean(dane$Cena[idx_drewno], na.rm = T)
+
+
+
+
+
+
+ekogroszek <- grepl("EKOGROSZEK", dane$Nazwa, fixed = TRUE)
+
+idx_ekogroszek <- which(ekogroszek == 1)
+
+dane$Nazwa[idx_ekogroszek]
+
+srednia_ekogroszek <- mean(dane$Cena[idx_ekogroszek], na.rm = T)
+
+
+
+
+
+
+
+
+groszek <- grepl("GROSZEK", dane$Nazwa, fixed = TRUE)
+
+idx_groszek <- which(groszek == 1)
+
+dane$Nazwa[idx_groszek]
+
+srednia_groszek <- mean(dane$Cena[idx_groszek], na.rm = T)
+
+
+
+
+
+
+
+koks <- grepl("KOKS", dane$Nazwa, fixed = TRUE)
+
+idx_koks <- which(koks == 1)
+
+dane$Nazwa[idx_koks]
+
+srednia_koks <- mean(dane$Cena[idx_koks], na.rm = T)
+
+
+
+
+
+
+orzech <- grepl("ORZECH", dane$Nazwa, fixed = TRUE)
+
+idx_orzech <- which(orzech == 1)
+
+dane$Nazwa[idx_orzech]
+
+srednia_orzech <- mean(dane$Cena[idx_orzech], na.rm = T)
+
+
+
+
+
+
+
+pellet <- grepl("PELLET", dane$Nazwa, fixed = TRUE)
+
+idx_pellet <- which(pellet == 1)
+
+dane$Nazwa[idx_pellet]
+
+srednia_pellet <- mean(dane$Cena[idx_pellet], na.rm = T)
+
+
+
+
+
+
+
+idx_wegiel <- which(ekogroszek == 1 | groszek == 1 | orzech == 1)
+
+dane$Nazwa[idx_wegiel]
+
+srednia_wegiel <- mean(dane$Cena[idx_wegiel], na.rm = T)
+
+
+
+
+
+
+
+
+
+mial <- grepl("MIAŁ", dane$Nazwa, fixed = TRUE)
+
+idx_mial <- which(mial == 1)
+
+dane$Nazwa[idx_mial]
+
+srednia_mial <- mean(dane$Cena[idx_mial], na.rm = T)
+
+
+
+
+
+
+
+
+
+
+srednie[nrow(srednie) + 1, ] <- c(as.character(Sys.Date()), mean(dane$Cena, na.rm = T), srednia_drewno, srednia_ekogroszek,
+                                  srednia_groszek, srednia_koks, srednia_orzech, srednia_pellet,
+                                  srednia_wegiel, srednia_mial)
+
+
+for(i in 2:ncol(srednie))
+{
+  srednie[, i] <- as.double(srednie[, i])
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+write.xlsx(srednie, paste0(getwd(), "/weglobud_srednie_", Sys.Date(), ".xlsx"))
+write.xlsx(srednie, paste0(getwd(), "/weglobud_srednie.xlsx"))
+
+write.xlsx(weglobud_ceny, paste0("W:/Osobiste/Kuba_Z/Scrapping/Scrapping węgiel (do zczytania)/Mix/weglobud_", Sys.Date(), ".xlsx"))
+write.xlsx(dane, paste0("W:/Osobiste/Kuba_Z/Scrapping/Scrapping węgiel (do zczytania)/Szeregi czasowe/weglobud_srednie_", Sys.Date(), ".xlsx"))
+write.xlsx(dane, paste0("W:/Osobiste/Kuba_Z/Scrapping/Scrapping węgiel (do zczytania)/Szeregi czasowe/weglobud_srednie.xlsx"))
